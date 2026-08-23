@@ -1,0 +1,1 @@
+-atualizar a taxa do cdi assim que inicia o app
