@@ -1,5 +1,7 @@
 package com.example.calculadoracdb
 
+import java.time.DayOfWeek
+import java.time.LocalDate
 import kotlin.math.pow
 
 /**
@@ -36,7 +38,8 @@ data class ResultadoCdb(
     val irValor: Double,
     val valorLiquido: Double,
     val rendimentoLiquido: Double,
-    val rentabilidadeLiquidaPercentual: Double
+    val rentabilidadeLiquidaPercentual: Double,
+    val dataFimInvestimento: LocalDate
 )
 
 /** Base de dias úteis usada pelo mercado para capitalização de CDB/CDI. */
@@ -50,8 +53,15 @@ private val DIAS_UTEIS_POR_MES = UnidadePrazo.MESES.diasPorUnidade
  * @param taxaAnual taxa efetiva ao ano, em decimal (ex.: 0.12 para 12% a.a.)
  * @param prazoDias prazo total da aplicação em dias úteis (o CDB rende apenas
  * em dias úteis; a taxa anual é capitalizada na base de 252 dias úteis)
+ * @param dataInicio data de início da aplicação, usada para calcular a data de vencimento
  */
-fun calcularCdb(principal: Double, aporteMensal: Double, taxaAnual: Double, prazoDias: Int): ResultadoCdb {
+fun calcularCdb(
+    principal: Double,
+    aporteMensal: Double,
+    taxaAnual: Double,
+    prazoDias: Int,
+    dataInicio: LocalDate = LocalDate.now()
+): ResultadoCdb {
     val taxaDiaria = (1 + taxaAnual).pow(1.0 / DIAS_UTEIS_POR_ANO) - 1
 
     val valorBrutoPrincipal = principal * (1 + taxaDiaria).pow(prazoDias.toDouble())
@@ -87,8 +97,22 @@ fun calcularCdb(principal: Double, aporteMensal: Double, taxaAnual: Double, praz
         irValor = irValor,
         valorLiquido = valorLiquido,
         rendimentoLiquido = rendimentoLiquido,
-        rentabilidadeLiquidaPercentual = rentabilidadeLiquidaPercentual
+        rentabilidadeLiquidaPercentual = rentabilidadeLiquidaPercentual,
+        dataFimInvestimento = adicionarDiasUteis(dataInicio, prazoDias)
     )
+}
+
+/** Soma [diasUteis] dias úteis (sem contar sábados e domingos) a [dataInicio]. */
+fun adicionarDiasUteis(dataInicio: LocalDate, diasUteis: Int): LocalDate {
+    var data = dataInicio
+    var diasRestantes = diasUteis
+    while (diasRestantes > 0) {
+        data = data.plusDays(1)
+        if (data.dayOfWeek != DayOfWeek.SATURDAY && data.dayOfWeek != DayOfWeek.SUNDAY) {
+            diasRestantes--
+        }
+    }
+    return data
 }
 
 /** Taxa efetiva anual (decimal) de um CDB pós-fixado indexado a um % do CDI. */

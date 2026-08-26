@@ -16,12 +16,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +39,10 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Payments
@@ -94,9 +100,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.calculadoracdb.ui.theme.CalculadoraCDBTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private const val PREFERENCIAS_APP = "calculadora_cdb_preferencias"
@@ -167,6 +177,9 @@ private enum class TipoRentabilidade { POS_FIXADO, PRE_FIXADO }
 private val formatoMoeda: NumberFormat =
     NumberFormat.getCurrencyInstance(Locale.Builder().setLanguage("pt").setRegion("BR").build())
 
+private val formatoData: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+private val formatoDataHora: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+
 private fun String.paraDoubleOuNulo(): Double? =
     replace(",", ".").toDoubleOrNull()
 
@@ -191,6 +204,13 @@ private fun CdbCalculatorScreen(
     var resultado by remember { mutableStateOf<ResultadoCdb?>(null) }
     var erro by remember { mutableStateOf<String?>(null) }
     var carregandoCdi by remember { mutableStateOf(false) }
+    var mostrarHistorico by remember { mutableStateOf(false) }
+
+    val contexto = LocalContext.current
+    val historicoRepositorio = remember {
+        HistoricoRepositorio(contexto.getSharedPreferences(PREFERENCIAS_APP, Context.MODE_PRIVATE))
+    }
+    var historico by remember { mutableStateOf(historicoRepositorio.carregarTodos()) }
 
     val cdiRateService = remember { CdiRateService() }
     val coroutineScope = rememberCoroutineScope()
@@ -272,6 +292,9 @@ private fun CdbCalculatorScreen(
                                 }
                             },
                             actions = {
+                                IconButton(onClick = { mostrarHistorico = true }) {
+                                    Icon(Icons.Filled.History, contentDescription = "Ver histórico de simulações")
+                                }
                                 IconButton(onClick = onAlternarTema) {
                                     Icon(
                                         if (temaEscuro) Icons.Filled.LightMode else Icons.Filled.DarkMode,
@@ -348,7 +371,30 @@ private fun CdbCalculatorScreen(
                                     erro = "Informe uma taxa válida."
                                 } else {
                                     val prazoDias = unidadePrazo.paraDias(prazoQtd)
-                                    resultado = calcularCdb(principal, aporteMensalValor, taxaAnual, prazoDias)
+                                    val novoResultado = calcularCdb(principal, aporteMensalValor, taxaAnual, prazoDias)
+                                    resultado = novoResultado
+
+                                    val descricaoTaxa = when (tipoRentabilidade) {
+                                        TipoRentabilidade.POS_FIXADO -> "$percentualCdi% do CDI"
+                                        TipoRentabilidade.PRE_FIXADO -> "$taxaPrefixada% a.a."
+                                    }
+                                    val descricaoEntrada = buildString {
+                                        append(formatoMoeda.format(principal))
+                                        if (aporteMensalValor > 0.0) {
+                                            append(" + ").append(formatoMoeda.format(aporteMensalValor)).append("/mês")
+                                        }
+                                        append(" · ").append(prazoQtd).append(" ")
+                                        append(unidadePrazo.rotulo().lowercase())
+                                        append(" · ").append(descricaoTaxa)
+                                    }
+                                    val item = ItemHistorico(
+                                        id = System.currentTimeMillis(),
+                                        dataHoraCalculo = LocalDateTime.now(),
+                                        descricaoEntrada = descricaoEntrada,
+                                        resultado = novoResultado
+                                    )
+                                    historicoRepositorio.adicionar(item)
+                                    historico = listOf(item) + historico
                                 }
                             },
                             shape = RoundedCornerShape(16.dp),
@@ -362,16 +408,32 @@ private fun CdbCalculatorScreen(
                         }
 
                         erro?.let { mensagem -> CartaoErro(mensagem) }
-
-                        resultado?.let { valor ->
-                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                ResultadoHero(valor)
-                                ResultadoDetalhes(valor)
-                            }
-                        }
                     }
                 }
             }
+        }
+
+        resultado?.let { valor ->
+            ModalResultado(resultado = valor, onFechar = { resultado = null })
+        }
+
+        if (mostrarHistorico) {
+            ModalHistorico(
+                itens = historico,
+                onFechar = { mostrarHistorico = false },
+                onVerItem = { item ->
+                    resultado = item.resultado
+                    mostrarHistorico = false
+                },
+                onRemoverItem = { item ->
+                    historicoRepositorio.remover(item.id)
+                    historico = historico.filterNot { it.id == item.id }
+                },
+                onLimparTudo = {
+                    historicoRepositorio.limparTudo()
+                    historico = emptyList()
+                }
+            )
         }
     }
 }
@@ -793,6 +855,169 @@ private fun BotaoInfoDiasUteis() {
 }
 
 @Composable
+private fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
+    Dialog(
+        onDismissRequest = onFechar,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.background,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .padding(vertical = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Resultado da simulação",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconButton(onClick = onFechar) {
+                        Icon(Icons.Filled.Close, contentDescription = "Fechar resultado")
+                    }
+                }
+
+                ResultadoHero(resultado)
+                ResultadoDetalhes(resultado)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModalHistorico(
+    itens: List<ItemHistorico>,
+    onFechar: () -> Unit,
+    onVerItem: (ItemHistorico) -> Unit,
+    onRemoverItem: (ItemHistorico) -> Unit,
+    onLimparTudo: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onFechar,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.background,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.85f)
+                .padding(vertical = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Histórico de simulações",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconButton(onClick = onFechar) {
+                        Icon(Icons.Filled.Close, contentDescription = "Fechar histórico")
+                    }
+                }
+
+                if (itens.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            "Nenhuma simulação salva ainda.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(itens, key = { it.id }) { item ->
+                            CartaoItemHistorico(
+                                item = item,
+                                onClick = { onVerItem(item) },
+                                onRemover = { onRemoverItem(item) }
+                            )
+                        }
+                    }
+
+                    TextButton(
+                        onClick = onLimparTudo,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.DeleteSweep, contentDescription = null)
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text("Limpar histórico")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartaoItemHistorico(item: ItemHistorico, onClick: () -> Unit, onRemover: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    item.dataHoraCalculo.format(formatoDataHora),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    item.descricaoEntrada,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "Líquido: ${formatoMoeda.format(item.resultado.valorLiquido)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            IconButton(onClick = onRemover) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Remover do histórico",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ResultadoHero(resultado: ResultadoCdb) {
     val degrade = Brush.linearGradient(
         colors = listOf(
@@ -860,6 +1085,7 @@ private fun ResultadoDetalhes(resultado: ResultadoCdb) {
         ) {
             Text("Detalhamento", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
+            LinhaResultado("Data de vencimento", resultado.dataFimInvestimento.format(formatoData))
             LinhaResultado("Total aportado", formatoMoeda.format(resultado.totalAportado))
             LinhaResultado("Valor bruto no vencimento", formatoMoeda.format(resultado.valorBruto))
             LinhaResultado("Rendimento bruto", formatoMoeda.format(resultado.rendimentoBruto))
