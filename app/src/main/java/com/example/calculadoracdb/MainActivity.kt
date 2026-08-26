@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -42,6 +43,7 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -177,6 +179,7 @@ private fun CdbCalculatorScreen(
     onCoresPersonalizadasChange: (CoresPersonalizadas) -> Unit
 ) {
     var valorInvestido by rememberSaveable { mutableStateOf("1000") }
+    var aporteMensal by rememberSaveable { mutableStateOf("0") }
     var tipoRentabilidade by rememberSaveable { mutableStateOf(TipoRentabilidade.POS_FIXADO) }
     var percentualCdi by rememberSaveable { mutableStateOf("102") }
     var taxaCdi by rememberSaveable { mutableStateOf("13,90") }
@@ -291,7 +294,9 @@ private fun CdbCalculatorScreen(
                     ) {
                         SecaoValorInvestido(
                             valorInvestido = valorInvestido,
-                            onValorChange = { valorInvestido = it }
+                            onValorChange = { valorInvestido = it },
+                            aporteMensal = aporteMensal,
+                            onAporteMensalChange = { aporteMensal = it }
                         )
 
                         SecaoRentabilidade(
@@ -321,6 +326,8 @@ private fun CdbCalculatorScreen(
                                 erro = null
                                 resultado = null
                                 val principal = valorInvestido.paraDoubleOuNulo()
+                                val aporteMensalValor =
+                                    if (aporteMensal.isBlank()) 0.0 else aporteMensal.paraDoubleOuNulo()
                                 val prazoQtd = prazoQuantidade.toIntOrNull()
                                 val taxaAnual = when (tipoRentabilidade) {
                                     TipoRentabilidade.PRE_FIXADO -> taxaPrefixada.paraDoubleOuNulo()?.div(100.0)
@@ -333,13 +340,15 @@ private fun CdbCalculatorScreen(
 
                                 if (principal == null || principal <= 0.0) {
                                     erro = "Informe um valor investido válido."
+                                } else if (aporteMensalValor == null || aporteMensalValor < 0.0) {
+                                    erro = "Informe um aporte mensal válido."
                                 } else if (prazoQtd == null || prazoQtd <= 0) {
                                     erro = "Informe um prazo válido."
                                 } else if (taxaAnual == null || taxaAnual < 0.0) {
                                     erro = "Informe uma taxa válida."
                                 } else {
                                     val prazoDias = unidadePrazo.paraDias(prazoQtd)
-                                    resultado = calcularCdb(principal, taxaAnual, prazoDias)
+                                    resultado = calcularCdb(principal, aporteMensalValor, taxaAnual, prazoDias)
                                 }
                             },
                             shape = RoundedCornerShape(16.dp),
@@ -500,6 +509,7 @@ private fun AmostraDeCor(cor: Color?, selecionada: Boolean, onClick: () -> Unit)
 private fun CartaoSecao(
     titulo: String,
     icone: androidx.compose.ui.graphics.vector.ImageVector,
+    acaoTitulo: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -529,7 +539,13 @@ private fun CartaoSecao(
                         )
                     }
                 }
-                Text(titulo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    titulo,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+                acaoTitulo?.invoke()
             }
             content()
         }
@@ -540,7 +556,9 @@ private fun CartaoSecao(
 @Composable
 private fun SecaoValorInvestido(
     valorInvestido: String,
-    onValorChange: (String) -> Unit
+    onValorChange: (String) -> Unit,
+    aporteMensal: String,
+    onAporteMensalChange: (String) -> Unit
 ) {
     CartaoSecao(titulo = "Valor investido", icone = Icons.Filled.Savings) {
         OutlinedTextField(
@@ -549,6 +567,15 @@ private fun SecaoValorInvestido(
             label = { Text("Valor investido (R$)") },
             leadingIcon = { Icon(Icons.Filled.AttachMoney, contentDescription = null) },
             textStyle = MaterialTheme.typography.titleLarge,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = aporteMensal,
+            onValueChange = onAporteMensalChange,
+            label = { Text("Aporte mensal (R$)") },
+            leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth()
@@ -648,7 +675,11 @@ private fun SecaoPrazo(
     unidadeExpandida: Boolean,
     onUnidadeExpandidaChange: (Boolean) -> Unit
 ) {
-    CartaoSecao(titulo = "Prazo da aplicação", icone = Icons.Filled.CalendarMonth) {
+    CartaoSecao(
+        titulo = "Prazo da aplicação",
+        icone = Icons.Filled.CalendarMonth,
+        acaoTitulo = { BotaoInfoDiasUteis() }
+    ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -723,9 +754,42 @@ private fun CartaoErro(mensagem: String) {
 }
 
 private fun UnidadePrazo.rotulo(): String = when (this) {
-    UnidadePrazo.DIAS -> "Dias"
+    UnidadePrazo.DIAS -> "Dias úteis"
     UnidadePrazo.MESES -> "Meses"
     UnidadePrazo.ANOS -> "Anos"
+}
+
+@Composable
+private fun BotaoInfoDiasUteis() {
+    var mostrarInfo by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { mostrarInfo = true }) {
+        Icon(
+            Icons.AutoMirrored.Filled.HelpOutline,
+            contentDescription = "Como o prazo é contado em dias úteis",
+            modifier = Modifier.size(20.dp)
+        )
+    }
+
+    if (mostrarInfo) {
+        AlertDialog(
+            onDismissRequest = { mostrarInfo = false },
+            confirmButton = {
+                TextButton(onClick = { mostrarInfo = false }) { Text("Entendi") }
+            },
+            icon = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null) },
+            title = { Text("Como o prazo é contado") },
+            text = {
+                Text(
+                    "O CDB rende apenas em dias úteis. Este app segue a convenção do " +
+                        "mercado financeiro para a contagem do prazo:\n\n" +
+                        "• 1 mês = 21 dias úteis\n" +
+                        "• 1 ano = 252 dias úteis\n\n" +
+                        "A taxa anual informada é capitalizada nessa mesma base de 252 dias úteis."
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -796,6 +860,7 @@ private fun ResultadoDetalhes(resultado: ResultadoCdb) {
         ) {
             Text("Detalhamento", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
+            LinhaResultado("Total aportado", formatoMoeda.format(resultado.totalAportado))
             LinhaResultado("Valor bruto no vencimento", formatoMoeda.format(resultado.valorBruto))
             LinhaResultado("Rendimento bruto", formatoMoeda.format(resultado.rendimentoBruto))
             LinhaResultado("IOF", formatoMoeda.format(resultado.iofValor))

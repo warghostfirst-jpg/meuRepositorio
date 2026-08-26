@@ -28,6 +28,7 @@ fun percentualIof(prazoDias: Int): Double = when {
 }
 
 data class ResultadoCdb(
+    val totalAportado: Double,
     val valorBruto: Double,
     val rendimentoBruto: Double,
     val iofValor: Double,
@@ -38,14 +39,33 @@ data class ResultadoCdb(
     val rentabilidadeLiquidaPercentual: Double
 )
 
+/** Base de dias úteis usada pelo mercado para capitalização de CDB/CDI. */
+const val DIAS_UTEIS_POR_ANO = 252
+
+private val DIAS_UTEIS_POR_MES = UnidadePrazo.MESES.diasPorUnidade
+
 /**
+ * @param principal valor investido no início da aplicação
+ * @param aporteMensal valor aportado ao final de cada mês (21 dias úteis) até o vencimento
  * @param taxaAnual taxa efetiva ao ano, em decimal (ex.: 0.12 para 12% a.a.)
- * @param prazoDias prazo total da aplicação em dias corridos
+ * @param prazoDias prazo total da aplicação em dias úteis (o CDB rende apenas
+ * em dias úteis; a taxa anual é capitalizada na base de 252 dias úteis)
  */
-fun calcularCdb(principal: Double, taxaAnual: Double, prazoDias: Int): ResultadoCdb {
-    val taxaDiaria = (1 + taxaAnual).pow(1.0 / 365.0) - 1
-    val valorBruto = principal * (1 + taxaDiaria).pow(prazoDias.toDouble())
-    val rendimentoBruto = valorBruto - principal
+fun calcularCdb(principal: Double, aporteMensal: Double, taxaAnual: Double, prazoDias: Int): ResultadoCdb {
+    val taxaDiaria = (1 + taxaAnual).pow(1.0 / DIAS_UTEIS_POR_ANO) - 1
+
+    val valorBrutoPrincipal = principal * (1 + taxaDiaria).pow(prazoDias.toDouble())
+
+    val numeroDeAportes = prazoDias / DIAS_UTEIS_POR_MES
+    var valorBrutoAportes = 0.0
+    for (mes in 1..numeroDeAportes) {
+        val diasRestantes = prazoDias - mes * DIAS_UTEIS_POR_MES
+        valorBrutoAportes += aporteMensal * (1 + taxaDiaria).pow(diasRestantes.toDouble())
+    }
+
+    val valorBruto = valorBrutoPrincipal + valorBrutoAportes
+    val totalAportado = principal + aporteMensal * numeroDeAportes
+    val rendimentoBruto = valorBruto - totalAportado
 
     val iofValor = (rendimentoBruto * percentualIof(prazoDias)).coerceAtLeast(0.0)
     val rendimentoAposIof = rendimentoBruto - iofValor
@@ -54,10 +74,12 @@ fun calcularCdb(principal: Double, taxaAnual: Double, prazoDias: Int): Resultado
     val irValor = (rendimentoAposIof * aliquota).coerceAtLeast(0.0)
 
     val rendimentoLiquido = rendimentoAposIof - irValor
-    val valorLiquido = principal + rendimentoLiquido
-    val rentabilidadeLiquidaPercentual = if (principal != 0.0) rendimentoLiquido / principal * 100.0 else 0.0
+    val valorLiquido = totalAportado + rendimentoLiquido
+    val rentabilidadeLiquidaPercentual =
+        if (totalAportado != 0.0) rendimentoLiquido / totalAportado * 100.0 else 0.0
 
     return ResultadoCdb(
+        totalAportado = totalAportado,
         valorBruto = valorBruto,
         rendimentoBruto = rendimentoBruto,
         iofValor = iofValor,
@@ -73,10 +95,15 @@ fun calcularCdb(principal: Double, taxaAnual: Double, prazoDias: Int): Resultado
 fun taxaAnualPosFixado(percentualCdi: Double, cdiAnual: Double): Double =
     (cdiAnual / 100.0) * (percentualCdi / 100.0)
 
+/**
+ * Unidades de prazo convertidas em dias úteis, seguindo a convenção do
+ * mercado financeiro para ativos que rendem em dias úteis (ex.: CDI/CDB):
+ * 1 mês = 21 dias úteis e 1 ano = 252 dias úteis.
+ */
 enum class UnidadePrazo(val diasPorUnidade: Int) {
     DIAS(1),
-    MESES(30),
-    ANOS(365)
+    MESES(21),
+    ANOS(DIAS_UTEIS_POR_ANO)
 }
 
 fun UnidadePrazo.paraDias(quantidade: Int): Int = quantidade * diasPorUnidade
