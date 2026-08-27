@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.horizontalScroll
@@ -44,11 +46,12 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -75,6 +78,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -96,6 +100,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -114,11 +119,25 @@ private const val CHAVE_TEMA_ESCURO = "tema_escuro"
 private const val CHAVE_COR_FUNDO = "cor_fundo"
 private const val CHAVE_COR_TEXTO = "cor_texto"
 private const val CHAVE_COR_BORDA = "cor_borda"
+private const val CHAVE_IMPOSTO_PERSONALIZAR_IR = "imposto_personalizar_ir"
+private const val CHAVE_IMPOSTO_ALIQUOTA_IR = "imposto_aliquota_ir"
+private const val CHAVE_IMPOSTO_PERSONALIZAR_IOF = "imposto_personalizar_iof"
+private const val CHAVE_IMPOSTO_ALIQUOTA_IOF = "imposto_aliquota_iof"
 
 private data class CoresPersonalizadas(
     val fundo: Color? = null,
     val texto: Color? = null,
     val borda: Color? = null
+)
+
+/** Por padrão, IR e IOF seguem a tabela regressiva automática conforme o prazo; ambos podem ser customizados. */
+private const val ALIQUOTA_IR_PADRAO_PERCENTUAL = 15.0
+
+private data class ConfiguracoesImposto(
+    val personalizarIr: Boolean = false,
+    val aliquotaIrPercentual: String = "%.0f".format(ALIQUOTA_IR_PADRAO_PERCENTUAL),
+    val personalizarIof: Boolean = false,
+    val aliquotaIofPercentual: String = "0"
 )
 
 private fun SharedPreferences.corSalva(chave: String): Color? =
@@ -149,6 +168,20 @@ class MainActivity : ComponentActivity() {
                     )
                 )
             }
+            var configuracoesImposto by remember {
+                mutableStateOf(
+                    ConfiguracoesImposto(
+                        personalizarIr = preferencias.getBoolean(CHAVE_IMPOSTO_PERSONALIZAR_IR, false),
+                        aliquotaIrPercentual = preferencias.getFloat(
+                            CHAVE_IMPOSTO_ALIQUOTA_IR,
+                            ALIQUOTA_IR_PADRAO_PERCENTUAL.toFloat()
+                        ).toString().replace(".", ","),
+                        personalizarIof = preferencias.getBoolean(CHAVE_IMPOSTO_PERSONALIZAR_IOF, false),
+                        aliquotaIofPercentual = preferencias.getFloat(CHAVE_IMPOSTO_ALIQUOTA_IOF, 0.0f)
+                            .toString().replace(".", ",")
+                    )
+                )
+            }
 
             CalculadoraCDBTheme(darkTheme = temaEscuro) {
                 CdbCalculatorScreen(
@@ -164,6 +197,22 @@ class MainActivity : ComponentActivity() {
                             .salvarCor(CHAVE_COR_FUNDO, novasCores.fundo)
                             .salvarCor(CHAVE_COR_TEXTO, novasCores.texto)
                             .salvarCor(CHAVE_COR_BORDA, novasCores.borda)
+                            .apply()
+                    },
+                    configuracoesImposto = configuracoesImposto,
+                    onConfiguracoesImpostoChange = { novasConfiguracoes ->
+                        configuracoesImposto = novasConfiguracoes
+                        preferencias.edit()
+                            .putBoolean(CHAVE_IMPOSTO_PERSONALIZAR_IR, novasConfiguracoes.personalizarIr)
+                            .putFloat(
+                                CHAVE_IMPOSTO_ALIQUOTA_IR,
+                                (novasConfiguracoes.aliquotaIrPercentual.paraDoubleOuNulo() ?: 0.0).toFloat()
+                            )
+                            .putBoolean(CHAVE_IMPOSTO_PERSONALIZAR_IOF, novasConfiguracoes.personalizarIof)
+                            .putFloat(
+                                CHAVE_IMPOSTO_ALIQUOTA_IOF,
+                                (novasConfiguracoes.aliquotaIofPercentual.paraDoubleOuNulo() ?: 0.0).toFloat()
+                            )
                             .apply()
                     }
                 )
@@ -189,7 +238,9 @@ private fun CdbCalculatorScreen(
     temaEscuro: Boolean,
     onAlternarTema: () -> Unit,
     coresPersonalizadas: CoresPersonalizadas,
-    onCoresPersonalizadasChange: (CoresPersonalizadas) -> Unit
+    onCoresPersonalizadasChange: (CoresPersonalizadas) -> Unit,
+    configuracoesImposto: ConfiguracoesImposto,
+    onConfiguracoesImpostoChange: (ConfiguracoesImposto) -> Unit
 ) {
     var valorInvestido by rememberSaveable { mutableStateOf("1000") }
     var aporteMensal by rememberSaveable { mutableStateOf("0") }
@@ -205,6 +256,7 @@ private fun CdbCalculatorScreen(
     var erro by remember { mutableStateOf<String?>(null) }
     var carregandoCdi by remember { mutableStateOf(false) }
     var mostrarHistorico by remember { mutableStateOf(false) }
+    var mostrarConfiguracoes by remember { mutableStateOf(false) }
 
     val contexto = LocalContext.current
     val historicoRepositorio = remember {
@@ -274,24 +326,35 @@ private fun CdbCalculatorScreen(
                         TopAppBar(
                             navigationIcon = {
                                 IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                                    Icon(Icons.Filled.Menu, contentDescription = "Abrir menu de personalização")
+                                    Icon(Icons.Filled.Palette, contentDescription = "Abrir personalização de cores")
                                 }
                             },
                             title = {
-                                Column {
-                                    Text(
-                                        "Calculadora CDB",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                        contentDescription = "Logo Calculadora CDB",
+                                        modifier = Modifier.size(40.dp)
                                     )
-                                    Text(
-                                        "Simule seu investimento em segundos",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Spacer(modifier = Modifier.size(10.dp))
+                                    Column {
+                                        Text(
+                                            "Calculadora CDB",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            "Simule seu investimento em segundos",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             },
                             actions = {
+                                IconButton(onClick = { mostrarConfiguracoes = true }) {
+                                    Icon(Icons.Filled.Settings, contentDescription = "Configurações de IR e IOF")
+                                }
                                 IconButton(onClick = { mostrarHistorico = true }) {
                                     Icon(Icons.Filled.History, contentDescription = "Ver histórico de simulações")
                                 }
@@ -371,7 +434,18 @@ private fun CdbCalculatorScreen(
                                     erro = "Informe uma taxa válida."
                                 } else {
                                     val prazoDias = unidadePrazo.paraDias(prazoQtd)
-                                    val novoResultado = calcularCdb(principal, aporteMensalValor, taxaAnual, prazoDias)
+                                    val novoResultado = calcularCdb(
+                                        principal = principal,
+                                        aporteMensal = aporteMensalValor,
+                                        taxaAnual = taxaAnual,
+                                        prazoDias = prazoDias,
+                                        aliquotaIrPersonalizada = if (configuracoesImposto.personalizarIr) {
+                                            (configuracoesImposto.aliquotaIrPercentual.paraDoubleOuNulo() ?: 0.0) / 100.0
+                                        } else null,
+                                        percentualIofPersonalizado = if (configuracoesImposto.personalizarIof) {
+                                            (configuracoesImposto.aliquotaIofPercentual.paraDoubleOuNulo() ?: 0.0) / 100.0
+                                        } else null
+                                    )
                                     resultado = novoResultado
 
                                     val descricaoTaxa = when (tipoRentabilidade) {
@@ -415,6 +489,14 @@ private fun CdbCalculatorScreen(
 
         resultado?.let { valor ->
             ModalResultado(resultado = valor, onFechar = { resultado = null })
+        }
+
+        if (mostrarConfiguracoes) {
+            ModalConfiguracoes(
+                configuracoes = configuracoesImposto,
+                onConfiguracoesChange = onConfiguracoesImpostoChange,
+                onFechar = { mostrarConfiguracoes = false }
+            )
         }
 
         if (mostrarHistorico) {
@@ -503,6 +585,129 @@ private fun MenuPersonalizarCores(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Restaurar cores padrão")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ModalConfiguracoes(
+    configuracoes: ConfiguracoesImposto,
+    onConfiguracoesChange: (ConfiguracoesImposto) -> Unit,
+    onFechar: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onFechar,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.background,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .padding(vertical = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Configurações", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = onFechar) {
+                        Icon(Icons.Filled.Close, contentDescription = "Fechar configurações")
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Personalizar taxa de IR",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Por padrão, o IR segue a tabela regressiva automaticamente conforme o prazo.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    BotaoInfoTaxaIr()
+                    Switch(
+                        checked = configuracoes.personalizarIr,
+                        onCheckedChange = { onConfiguracoesChange(configuracoes.copy(personalizarIr = it)) }
+                    )
+                }
+
+                if (configuracoes.personalizarIr) {
+                    OutlinedTextField(
+                        value = configuracoes.aliquotaIrPercentual,
+                        onValueChange = { texto ->
+                            onConfiguracoesChange(configuracoes.copy(aliquotaIrPercentual = texto))
+                        },
+                        label = { Text("Alíquota de IR (%)") },
+                        leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                HorizontalDivider()
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Personalizar taxa de IOF",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Por padrão, o IOF segue a tabela regressiva automaticamente conforme o prazo.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    BotaoInfoTaxaIof()
+                    Switch(
+                        checked = configuracoes.personalizarIof,
+                        onCheckedChange = { onConfiguracoesChange(configuracoes.copy(personalizarIof = it)) }
+                    )
+                }
+
+                if (configuracoes.personalizarIof) {
+                    OutlinedTextField(
+                        value = configuracoes.aliquotaIofPercentual,
+                        onValueChange = { texto ->
+                            onConfiguracoesChange(configuracoes.copy(aliquotaIofPercentual = texto))
+                        },
+                        label = { Text("Alíquota de IOF (%)") },
+                        leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        "Deixe o IOF em 0% se o resgate ocorrer 30 dias ou mais após a aplicação.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
@@ -822,13 +1027,17 @@ private fun UnidadePrazo.rotulo(): String = when (this) {
 }
 
 @Composable
-private fun BotaoInfoDiasUteis() {
+private fun BotaoInfo(
+    descricao: String,
+    titulo: String,
+    conteudo: @Composable ColumnScope.() -> Unit
+) {
     var mostrarInfo by remember { mutableStateOf(false) }
 
     IconButton(onClick = { mostrarInfo = true }) {
         Icon(
             Icons.AutoMirrored.Filled.HelpOutline,
-            contentDescription = "Como o prazo é contado em dias úteis",
+            contentDescription = descricao,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -840,17 +1049,67 @@ private fun BotaoInfoDiasUteis() {
                 TextButton(onClick = { mostrarInfo = false }) { Text("Entendi") }
             },
             icon = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null) },
-            title = { Text("Como o prazo é contado") },
+            title = { Text(titulo) },
             text = {
-                Text(
-                    "O CDB rende apenas em dias úteis. Este app segue a convenção do " +
-                        "mercado financeiro para a contagem do prazo:\n\n" +
-                        "• 1 mês = 21 dias úteis\n" +
-                        "• 1 ano = 252 dias úteis\n\n" +
-                        "A taxa anual informada é capitalizada nessa mesma base de 252 dias úteis."
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 320.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    content = conteudo
                 )
             }
         )
+    }
+}
+
+@Composable
+private fun BotaoInfoDiasUteis() {
+    BotaoInfo(
+        descricao = "Como o prazo é contado em dias úteis",
+        titulo = "Como o prazo é contado"
+    ) {
+        Text(
+            "O CDB rende apenas em dias úteis. Este app segue a convenção do " +
+                "mercado financeiro para a contagem do prazo:\n\n" +
+                "• 1 mês = 21 dias úteis\n" +
+                "• 1 ano = 252 dias úteis\n\n" +
+                "A taxa anual informada é capitalizada nessa mesma base de 252 dias úteis."
+        )
+    }
+}
+
+@Composable
+private fun BotaoInfoTaxaIr() {
+    BotaoInfo(
+        descricao = "Como funciona a tabela regressiva de IR",
+        titulo = "Tabela regressiva de IR"
+    ) {
+        Text(
+            "O Imposto de Renda incide sobre o rendimento do CDB conforme o prazo da " +
+                "aplicação, segundo a tabela regressiva (Lei 11.033/2004):"
+        )
+        Text("• Até 180 dias: 22,5%")
+        Text("• De 181 a 360 dias: 20%")
+        Text("• De 361 a 720 dias: 17,5%")
+        Text("• Acima de 720 dias: 15%")
+    }
+}
+
+@Composable
+private fun BotaoInfoTaxaIof() {
+    BotaoInfo(
+        descricao = "Como funciona a tabela regressiva de IOF",
+        titulo = "Tabela regressiva de IOF"
+    ) {
+        Text(
+            "O IOF incide sobre o rendimento apenas quando o resgate ocorre antes de 30 " +
+                "dias corridos da aplicação (Decreto 6.306/2007):"
+        )
+        for (dia in 1..29) {
+            Text("• Dia $dia: ${"%.0f".format(percentualIof(dia) * 100)}%")
+        }
+        Text("• A partir do dia 30: isento (0%)")
     }
 }
 
@@ -1131,12 +1390,15 @@ private fun LinhaResultado(rotulo: String, valor: String, enfase: Boolean = fals
 private fun CdbCalculatorScreenPreview() {
     var temaEscuro by remember { mutableStateOf(false) }
     var coresPersonalizadas by remember { mutableStateOf(CoresPersonalizadas()) }
+    var configuracoesImposto by remember { mutableStateOf(ConfiguracoesImposto()) }
     CalculadoraCDBTheme(darkTheme = temaEscuro) {
         CdbCalculatorScreen(
             temaEscuro = temaEscuro,
             onAlternarTema = { temaEscuro = !temaEscuro },
             coresPersonalizadas = coresPersonalizadas,
-            onCoresPersonalizadasChange = { coresPersonalizadas = it }
+            onCoresPersonalizadasChange = { coresPersonalizadas = it },
+            configuracoesImposto = configuracoesImposto,
+            onConfiguracoesImpostoChange = { configuracoesImposto = it }
         )
     }
 }

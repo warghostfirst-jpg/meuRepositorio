@@ -60,7 +60,9 @@ fun calcularCdb(
     aporteMensal: Double,
     taxaAnual: Double,
     prazoDias: Int,
-    dataInicio: LocalDate = LocalDate.now()
+    dataInicio: LocalDate = LocalDate.now(),
+    aliquotaIrPersonalizada: Double? = null,
+    percentualIofPersonalizado: Double? = null
 ): ResultadoCdb {
     val taxaDiaria = (1 + taxaAnual).pow(1.0 / DIAS_UTEIS_POR_ANO) - 1
 
@@ -77,10 +79,11 @@ fun calcularCdb(
     val totalAportado = principal + aporteMensal * numeroDeAportes
     val rendimentoBruto = valorBruto - totalAportado
 
-    val iofValor = (rendimentoBruto * percentualIof(prazoDias)).coerceAtLeast(0.0)
+    val percentualIofAplicado = percentualIofPersonalizado ?: percentualIof(prazoDias)
+    val iofValor = (rendimentoBruto * percentualIofAplicado).coerceAtLeast(0.0)
     val rendimentoAposIof = rendimentoBruto - iofValor
 
-    val aliquota = aliquotaIr(prazoDias)
+    val aliquota = aliquotaIrPersonalizada ?: aliquotaIr(prazoDias)
     val irValor = (rendimentoAposIof * aliquota).coerceAtLeast(0.0)
 
     val rendimentoLiquido = rendimentoAposIof - irValor
