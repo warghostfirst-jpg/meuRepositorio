@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
@@ -27,6 +28,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -121,6 +126,8 @@ private fun CartaoItemHistorico(
     onClick: () -> Unit,
     onRemover: () -> Unit
 ) {
+    var mostrarGrafico by remember { mutableStateOf(false) }
+
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -153,6 +160,12 @@ private fun CartaoItemHistorico(
                     )
                 }
             }
+            IconButton(onClick = { mostrarGrafico = true }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ShowChart,
+                    contentDescription = "Ver gráfico de evolução"
+                )
+            }
             IconButton(onClick = onRemover) {
                 Icon(
                     Icons.Filled.Delete,
@@ -161,6 +174,10 @@ private fun CartaoItemHistorico(
                 )
             }
         }
+    }
+
+    if (mostrarGrafico) {
+        ModalGraficoEvolucao(resultado = item.resultado, onFechar = { mostrarGrafico = false })
     }
 }
 

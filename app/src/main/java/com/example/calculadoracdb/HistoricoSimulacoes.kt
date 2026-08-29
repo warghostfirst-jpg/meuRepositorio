@@ -64,6 +64,21 @@ private fun ResultadoCdb.paraJson(): JSONObject = JSONObject().apply {
     put("rendimentoLiquido", rendimentoLiquido)
     put("rentabilidadeLiquidaPercentual", rentabilidadeLiquidaPercentual)
     put("dataFimInvestimento", dataFimInvestimento.toString())
+    put("evolucao", JSONArray().apply { evolucao.forEach { put(it.paraJson()) } })
+}
+
+private fun PontoEvolucao.paraJson(): JSONObject = JSONObject().apply {
+    put("diaUtil", diaUtil)
+    put("data", data.toString())
+    put("totalAportado", totalAportado)
+    put("valorBruto", valorBruto)
+    put("rendimentoBruto", rendimentoBruto)
+    put("iofValor", iofValor)
+    put("aliquotaIr", aliquotaIr)
+    put("irValor", irValor)
+    put("valorLiquido", valorLiquido)
+    put("rendimentoLiquido", rendimentoLiquido)
+    put("rentabilidadeLiquidaPercentual", rentabilidadeLiquidaPercentual)
 }
 
 private fun JSONObject.paraItemHistorico(): ItemHistorico = ItemHistorico(
@@ -83,5 +98,24 @@ private fun JSONObject.paraResultadoCdb(): ResultadoCdb = ResultadoCdb(
     valorLiquido = getDouble("valorLiquido"),
     rendimentoLiquido = getDouble("rendimentoLiquido"),
     rentabilidadeLiquidaPercentual = getDouble("rentabilidadeLiquidaPercentual"),
-    dataFimInvestimento = LocalDate.parse(getString("dataFimInvestimento"))
+    dataFimInvestimento = LocalDate.parse(getString("dataFimInvestimento")),
+    evolucao = optJSONArray("evolucao")?.let { array ->
+        (0 until array.length()).mapNotNull { indice ->
+            runCatching { array.getJSONObject(indice).paraPontoEvolucao() }.getOrNull()
+        }
+    } ?: emptyList()
+)
+
+private fun JSONObject.paraPontoEvolucao(): PontoEvolucao = PontoEvolucao(
+    diaUtil = getInt("diaUtil"),
+    data = LocalDate.parse(getString("data")),
+    totalAportado = getDouble("totalAportado"),
+    valorBruto = getDouble("valorBruto"),
+    rendimentoBruto = getDouble("rendimentoBruto"),
+    iofValor = getDouble("iofValor"),
+    aliquotaIr = getDouble("aliquotaIr"),
+    irValor = getDouble("irValor"),
+    valorLiquido = getDouble("valorLiquido"),
+    rendimentoLiquido = getDouble("rendimentoLiquido"),
+    rentabilidadeLiquidaPercentual = getDouble("rentabilidadeLiquidaPercentual")
 )

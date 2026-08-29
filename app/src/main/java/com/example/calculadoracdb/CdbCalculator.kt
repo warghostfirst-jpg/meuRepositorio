@@ -39,8 +39,93 @@ data class ResultadoCdb(
     val valorLiquido: Double,
     val rendimentoLiquido: Double,
     val rentabilidadeLiquidaPercentual: Double,
-    val dataFimInvestimento: LocalDate
+    val dataFimInvestimento: LocalDate,
+    val evolucao: List<PontoEvolucao> = emptyList()
 )
+
+/**
+ * Um ponto da evolução do investimento ao longo do prazo. Os valores líquidos consideram
+ * IOF e IR como se o resgate ocorresse naquele dia (regime regressivo, salvo alíquotas
+ * personalizadas).
+ */
+data class PontoEvolucao(
+    val diaUtil: Int,
+    val data: LocalDate,
+    val totalAportado: Double,
+    val valorBruto: Double,
+    val rendimentoBruto: Double,
+    val iofValor: Double,
+    val aliquotaIr: Double,
+    val irValor: Double,
+    val valorLiquido: Double,
+    val rendimentoLiquido: Double,
+    val rentabilidadeLiquidaPercentual: Double
+)
+
+/** Número máximo de pontos gerados para o gráfico de evolução, para manter o traçado legível. */
+private const val MAX_PONTOS_EVOLUCAO = 48
+
+/** Gera os pontos de evolução de todos os atributos calculados, do início ao vencimento. */
+private fun gerarEvolucao(
+    principal: Double,
+    aporteMensal: Double,
+    taxaDiaria: Double,
+    prazoDias: Int,
+    dataInicio: LocalDate,
+    aliquotaIrPersonalizada: Double?,
+    percentualIofPersonalizado: Double?
+): List<PontoEvolucao> {
+    if (prazoDias <= 0) return emptyList()
+
+    val passoDias = maxOf(1, (prazoDias + MAX_PONTOS_EVOLUCAO - 1) / MAX_PONTOS_EVOLUCAO)
+    val diasDosPontos = buildList {
+        var dia = 0
+        while (dia < prazoDias) {
+            add(dia)
+            dia += passoDias
+        }
+        add(prazoDias)
+    }
+
+    return diasDosPontos.map { dia ->
+        val valorBrutoPrincipal = principal * (1 + taxaDiaria).pow(dia.toDouble())
+        val numeroDeAportesAteODia = dia / DIAS_UTEIS_POR_MES
+        var valorBrutoAportes = 0.0
+        for (mes in 1..numeroDeAportesAteODia) {
+            val diasRestantes = dia - mes * DIAS_UTEIS_POR_MES
+            valorBrutoAportes += aporteMensal * (1 + taxaDiaria).pow(diasRestantes.toDouble())
+        }
+        val totalAportadoNoDia = principal + aporteMensal * numeroDeAportesAteODia
+        val valorBrutoNoDia = valorBrutoPrincipal + valorBrutoAportes
+        val rendimentoBrutoNoDia = valorBrutoNoDia - totalAportadoNoDia
+
+        val percentualIofNoDia = percentualIofPersonalizado ?: percentualIof(dia)
+        val iofValorNoDia = (rendimentoBrutoNoDia * percentualIofNoDia).coerceAtLeast(0.0)
+        val rendimentoAposIofNoDia = rendimentoBrutoNoDia - iofValorNoDia
+
+        val aliquotaIrNoDia = aliquotaIrPersonalizada ?: aliquotaIr(dia)
+        val irValorNoDia = (rendimentoAposIofNoDia * aliquotaIrNoDia).coerceAtLeast(0.0)
+
+        val rendimentoLiquidoNoDia = rendimentoAposIofNoDia - irValorNoDia
+        val valorLiquidoNoDia = totalAportadoNoDia + rendimentoLiquidoNoDia
+        val rentabilidadeLiquidaNoDia =
+            if (totalAportadoNoDia != 0.0) rendimentoLiquidoNoDia / totalAportadoNoDia * 100.0 else 0.0
+
+        PontoEvolucao(
+            diaUtil = dia,
+            data = adicionarDiasUteis(dataInicio, dia),
+            totalAportado = totalAportadoNoDia,
+            valorBruto = valorBrutoNoDia,
+            rendimentoBruto = rendimentoBrutoNoDia,
+            iofValor = iofValorNoDia,
+            aliquotaIr = aliquotaIrNoDia,
+            irValor = irValorNoDia,
+            valorLiquido = valorLiquidoNoDia,
+            rendimentoLiquido = rendimentoLiquidoNoDia,
+            rentabilidadeLiquidaPercentual = rentabilidadeLiquidaNoDia
+        )
+    }
+}
 
 /** Base de dias úteis usada pelo mercado para capitalização de CDB/CDI. */
 const val DIAS_UTEIS_POR_ANO = 252
@@ -101,7 +186,16 @@ fun calcularCdb(
         valorLiquido = valorLiquido,
         rendimentoLiquido = rendimentoLiquido,
         rentabilidadeLiquidaPercentual = rentabilidadeLiquidaPercentual,
-        dataFimInvestimento = adicionarDiasUteis(dataInicio, prazoDias)
+        dataFimInvestimento = adicionarDiasUteis(dataInicio, prazoDias),
+        evolucao = gerarEvolucao(
+            principal,
+            aporteMensal,
+            taxaDiaria,
+            prazoDias,
+            dataInicio,
+            aliquotaIrPersonalizada,
+            percentualIofPersonalizado
+        )
     )
 }
 

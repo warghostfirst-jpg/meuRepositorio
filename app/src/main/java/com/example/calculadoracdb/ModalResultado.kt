@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
@@ -24,6 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +40,8 @@ import androidx.compose.ui.window.DialogProperties
 
 @Composable
 internal fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
+    var mostrarGrafico by remember { mutableStateOf(false) }
+
     Dialog(
         onDismissRequest = onFechar,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -63,8 +70,16 @@ internal fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-                    IconButton(onClick = onFechar) {
-                        Icon(Icons.Filled.Close, contentDescription = "Fechar resultado")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { mostrarGrafico = true }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ShowChart,
+                                contentDescription = "Ver gráfico de evolução"
+                            )
+                        }
+                        IconButton(onClick = onFechar) {
+                            Icon(Icons.Filled.Close, contentDescription = "Fechar resultado")
+                        }
                     }
                 }
 
@@ -72,6 +87,10 @@ internal fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
                 ResultadoDetalhes(resultado)
             }
         }
+    }
+
+    if (mostrarGrafico) {
+        ModalGraficoEvolucao(resultado = resultado, onFechar = { mostrarGrafico = false })
     }
 }
 
