@@ -123,6 +123,16 @@ private const val CHAVE_IMPOSTO_PERSONALIZAR_IR = "imposto_personalizar_ir"
 private const val CHAVE_IMPOSTO_ALIQUOTA_IR = "imposto_aliquota_ir"
 private const val CHAVE_IMPOSTO_PERSONALIZAR_IOF = "imposto_personalizar_iof"
 private const val CHAVE_IMPOSTO_ALIQUOTA_IOF = "imposto_aliquota_iof"
+private const val CHAVE_HISTORICO_MOSTRAR_DATA_VENCIMENTO = "historico_mostrar_data_vencimento"
+private const val CHAVE_HISTORICO_MOSTRAR_TOTAL_APORTADO = "historico_mostrar_total_aportado"
+private const val CHAVE_HISTORICO_MOSTRAR_VALOR_BRUTO = "historico_mostrar_valor_bruto"
+private const val CHAVE_HISTORICO_MOSTRAR_RENDIMENTO_BRUTO = "historico_mostrar_rendimento_bruto"
+private const val CHAVE_HISTORICO_MOSTRAR_IOF = "historico_mostrar_iof"
+private const val CHAVE_HISTORICO_MOSTRAR_ALIQUOTA_IR = "historico_mostrar_aliquota_ir"
+private const val CHAVE_HISTORICO_MOSTRAR_IR = "historico_mostrar_ir"
+private const val CHAVE_HISTORICO_MOSTRAR_VALOR_LIQUIDO = "historico_mostrar_valor_liquido"
+private const val CHAVE_HISTORICO_MOSTRAR_RENDIMENTO_LIQUIDO = "historico_mostrar_rendimento_liquido"
+private const val CHAVE_HISTORICO_MOSTRAR_RENTABILIDADE = "historico_mostrar_rentabilidade"
 
 private data class CoresPersonalizadas(
     val fundo: Color? = null,
@@ -138,6 +148,20 @@ private data class ConfiguracoesImposto(
     val aliquotaIrPercentual: String = "%.0f".format(ALIQUOTA_IR_PADRAO_PERCENTUAL),
     val personalizarIof: Boolean = false,
     val aliquotaIofPercentual: String = "0"
+)
+
+/** Controla quais campos do resultado da simulação aparecem nos cartões do histórico. */
+private data class CamposHistorico(
+    val dataFimInvestimento: Boolean = false,
+    val totalAportado: Boolean = false,
+    val valorBruto: Boolean = false,
+    val rendimentoBruto: Boolean = false,
+    val iofValor: Boolean = false,
+    val aliquotaIr: Boolean = false,
+    val irValor: Boolean = false,
+    val rendimentoLiquido: Boolean = false,
+    val valorLiquido: Boolean = true,
+    val rentabilidadeLiquidaPercentual: Boolean = false
 )
 
 private fun SharedPreferences.corSalva(chave: String): Color? =
@@ -182,6 +206,22 @@ class MainActivity : ComponentActivity() {
                     )
                 )
             }
+            var camposHistorico by remember {
+                mutableStateOf(
+                    CamposHistorico(
+                        dataFimInvestimento = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_DATA_VENCIMENTO, false),
+                        totalAportado = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_TOTAL_APORTADO, false),
+                        valorBruto = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_VALOR_BRUTO, false),
+                        rendimentoBruto = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_RENDIMENTO_BRUTO, false),
+                        iofValor = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_IOF, false),
+                        aliquotaIr = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_ALIQUOTA_IR, false),
+                        irValor = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_IR, false),
+                        rendimentoLiquido = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_RENDIMENTO_LIQUIDO, false),
+                        valorLiquido = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_VALOR_LIQUIDO, true),
+                        rentabilidadeLiquidaPercentual = preferencias.getBoolean(CHAVE_HISTORICO_MOSTRAR_RENTABILIDADE, false)
+                    )
+                )
+            }
 
             CalculadoraCDBTheme(darkTheme = temaEscuro) {
                 CdbCalculatorScreen(
@@ -214,6 +254,22 @@ class MainActivity : ComponentActivity() {
                                 (novasConfiguracoes.aliquotaIofPercentual.paraDoubleOuNulo() ?: 0.0).toFloat()
                             )
                             .apply()
+                    },
+                    camposHistorico = camposHistorico,
+                    onCamposHistoricoChange = { novosCampos ->
+                        camposHistorico = novosCampos
+                        preferencias.edit()
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_DATA_VENCIMENTO, novosCampos.dataFimInvestimento)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_TOTAL_APORTADO, novosCampos.totalAportado)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_VALOR_BRUTO, novosCampos.valorBruto)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_RENDIMENTO_BRUTO, novosCampos.rendimentoBruto)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_IOF, novosCampos.iofValor)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_ALIQUOTA_IR, novosCampos.aliquotaIr)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_IR, novosCampos.irValor)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_RENDIMENTO_LIQUIDO, novosCampos.rendimentoLiquido)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_VALOR_LIQUIDO, novosCampos.valorLiquido)
+                            .putBoolean(CHAVE_HISTORICO_MOSTRAR_RENTABILIDADE, novosCampos.rentabilidadeLiquidaPercentual)
+                            .apply()
                     }
                 )
             }
@@ -240,7 +296,9 @@ private fun CdbCalculatorScreen(
     coresPersonalizadas: CoresPersonalizadas,
     onCoresPersonalizadasChange: (CoresPersonalizadas) -> Unit,
     configuracoesImposto: ConfiguracoesImposto,
-    onConfiguracoesImpostoChange: (ConfiguracoesImposto) -> Unit
+    onConfiguracoesImpostoChange: (ConfiguracoesImposto) -> Unit,
+    camposHistorico: CamposHistorico,
+    onCamposHistoricoChange: (CamposHistorico) -> Unit
 ) {
     var valorInvestido by rememberSaveable { mutableStateOf("1000") }
     var aporteMensal by rememberSaveable { mutableStateOf("0") }
@@ -331,11 +389,11 @@ private fun CdbCalculatorScreen(
                             },
                             title = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Image(
+                                    /*Image(
                                         painter = painterResource(id = R.drawable.ic_launcher_foreground),
                                         contentDescription = "Logo Calculadora CDB",
                                         modifier = Modifier.size(40.dp)
-                                    )
+                                    )*/
                                     Spacer(modifier = Modifier.size(10.dp))
                                     Column {
                                         Text(
@@ -343,11 +401,11 @@ private fun CdbCalculatorScreen(
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold
                                         )
-                                        Text(
+                                        /*Text(
                                             "Simule seu investimento em segundos",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                        )*/
                                     }
                                 }
                             },
@@ -495,6 +553,8 @@ private fun CdbCalculatorScreen(
             ModalConfiguracoes(
                 configuracoes = configuracoesImposto,
                 onConfiguracoesChange = onConfiguracoesImpostoChange,
+                camposHistorico = camposHistorico,
+                onCamposHistoricoChange = onCamposHistoricoChange,
                 onFechar = { mostrarConfiguracoes = false }
             )
         }
@@ -502,6 +562,7 @@ private fun CdbCalculatorScreen(
         if (mostrarHistorico) {
             ModalHistorico(
                 itens = historico,
+                camposHistorico = camposHistorico,
                 onFechar = { mostrarHistorico = false },
                 onVerItem = { item ->
                     resultado = item.resultado
@@ -594,6 +655,8 @@ private fun MenuPersonalizarCores(
 private fun ModalConfiguracoes(
     configuracoes: ConfiguracoesImposto,
     onConfiguracoesChange: (ConfiguracoesImposto) -> Unit,
+    camposHistorico: CamposHistorico,
+    onCamposHistoricoChange: (CamposHistorico) -> Unit,
     onFechar: () -> Unit
 ) {
     Dialog(
@@ -707,8 +770,84 @@ private fun ModalConfiguracoes(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+                HorizontalDivider()
+
+                Text(
+                    "Campos exibidos no histórico",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Escolha quais campos do resultado da simulação aparecem nos cartões do histórico.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                LinhaSwitchCampo(
+                    titulo = "Data de vencimento",
+                    marcado = camposHistorico.dataFimInvestimento,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(dataFimInvestimento = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "Total aportado",
+                    marcado = camposHistorico.totalAportado,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(totalAportado = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "Valor bruto no vencimento",
+                    marcado = camposHistorico.valorBruto,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(valorBruto = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "Rendimento bruto",
+                    marcado = camposHistorico.rendimentoBruto,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(rendimentoBruto = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "IOF",
+                    marcado = camposHistorico.iofValor,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(iofValor = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "Alíquota de IR",
+                    marcado = camposHistorico.aliquotaIr,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(aliquotaIr = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "IR",
+                    marcado = camposHistorico.irValor,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(irValor = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "Rendimento líquido",
+                    marcado = camposHistorico.rendimentoLiquido,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(rendimentoLiquido = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "Valor líquido",
+                    marcado = camposHistorico.valorLiquido,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(valorLiquido = it)) }
+                )
+                LinhaSwitchCampo(
+                    titulo = "Rentabilidade líquida",
+                    marcado = camposHistorico.rentabilidadeLiquidaPercentual,
+                    aoAlterar = { onCamposHistoricoChange(camposHistorico.copy(rentabilidadeLiquidaPercentual = it)) }
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun LinhaSwitchCampo(titulo: String, marcado: Boolean, aoAlterar: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(titulo, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Switch(checked = marcado, onCheckedChange = aoAlterar)
     }
 }
 
@@ -1158,6 +1297,7 @@ private fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
 @Composable
 private fun ModalHistorico(
     itens: List<ItemHistorico>,
+    camposHistorico: CamposHistorico,
     onFechar: () -> Unit,
     onVerItem: (ItemHistorico) -> Unit,
     onRemoverItem: (ItemHistorico) -> Unit,
@@ -1213,6 +1353,7 @@ private fun ModalHistorico(
                         items(itens, key = { it.id }) { item ->
                             CartaoItemHistorico(
                                 item = item,
+                                camposHistorico = camposHistorico,
                                 onClick = { onVerItem(item) },
                                 onRemover = { onRemoverItem(item) }
                             )
@@ -1234,7 +1375,12 @@ private fun ModalHistorico(
 }
 
 @Composable
-private fun CartaoItemHistorico(item: ItemHistorico, onClick: () -> Unit, onRemover: () -> Unit) {
+private fun CartaoItemHistorico(
+    item: ItemHistorico,
+    camposHistorico: CamposHistorico,
+    onClick: () -> Unit,
+    onRemover: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -1258,12 +1404,14 @@ private fun CartaoItemHistorico(item: ItemHistorico, onClick: () -> Unit, onRemo
                     item.descricaoEntrada,
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    "Líquido: ${formatoMoeda.format(item.resultado.valorLiquido)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                camposDoResultado(item.resultado, camposHistorico).forEach { (rotulo, valor) ->
+                    Text(
+                        "$rotulo: $valor",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             IconButton(onClick = onRemover) {
                 Icon(
@@ -1275,6 +1423,22 @@ private fun CartaoItemHistorico(item: ItemHistorico, onClick: () -> Unit, onRemo
         }
     }
 }
+
+private fun camposDoResultado(resultado: ResultadoCdb, campos: CamposHistorico): List<Pair<String, String>> =
+    buildList {
+        if (campos.dataFimInvestimento) add("Vencimento" to resultado.dataFimInvestimento.format(formatoData))
+        if (campos.totalAportado) add("Total aportado" to formatoMoeda.format(resultado.totalAportado))
+        if (campos.valorBruto) add("Valor bruto" to formatoMoeda.format(resultado.valorBruto))
+        if (campos.rendimentoBruto) add("Rendimento bruto" to formatoMoeda.format(resultado.rendimentoBruto))
+        if (campos.iofValor) add("IOF" to formatoMoeda.format(resultado.iofValor))
+        if (campos.aliquotaIr) add("Alíquota de IR" to "%.1f%%".format(resultado.aliquotaIr * 100))
+        if (campos.irValor) add("IR" to formatoMoeda.format(resultado.irValor))
+        if (campos.rendimentoLiquido) add("Rendimento líquido" to formatoMoeda.format(resultado.rendimentoLiquido))
+        if (campos.valorLiquido) add("Líquido" to formatoMoeda.format(resultado.valorLiquido))
+        if (campos.rentabilidadeLiquidaPercentual) {
+            add("Rentabilidade líquida" to "%.2f%%".format(resultado.rentabilidadeLiquidaPercentual))
+        }
+    }
 
 @Composable
 private fun ResultadoHero(resultado: ResultadoCdb) {
@@ -1391,6 +1555,7 @@ private fun CdbCalculatorScreenPreview() {
     var temaEscuro by remember { mutableStateOf(false) }
     var coresPersonalizadas by remember { mutableStateOf(CoresPersonalizadas()) }
     var configuracoesImposto by remember { mutableStateOf(ConfiguracoesImposto()) }
+    var camposHistorico by remember { mutableStateOf(CamposHistorico()) }
     CalculadoraCDBTheme(darkTheme = temaEscuro) {
         CdbCalculatorScreen(
             temaEscuro = temaEscuro,
@@ -1398,7 +1563,9 @@ private fun CdbCalculatorScreenPreview() {
             coresPersonalizadas = coresPersonalizadas,
             onCoresPersonalizadasChange = { coresPersonalizadas = it },
             configuracoesImposto = configuracoesImposto,
-            onConfiguracoesImpostoChange = { configuracoesImposto = it }
+            onConfiguracoesImpostoChange = { configuracoesImposto = it },
+            camposHistorico = camposHistorico,
+            onCamposHistoricoChange = { camposHistorico = it }
         )
     }
 }
