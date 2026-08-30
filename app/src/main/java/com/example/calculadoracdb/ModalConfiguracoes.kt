@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,6 +54,7 @@ internal fun ModalConfiguracoes(
         ) {
             Column(
                 modifier = Modifier
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -102,7 +104,7 @@ internal fun ModalConfiguracoes(
                         leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
                     )
                 }
 
@@ -142,7 +144,7 @@ internal fun ModalConfiguracoes(
                         leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
                     )
                     Text(
                         "Deixe o IOF em 0% se o resgate ocorrer 30 dias ou mais após a aplicação.",

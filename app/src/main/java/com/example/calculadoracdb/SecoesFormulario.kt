@@ -6,10 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -41,12 +46,41 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+
+/**
+ * Rola o campo para ficar visível acima do teclado. Necessário porque o scroll automático
+ * do Compose ao focar um campo é calculado antes da animação do teclado terminar, então sem
+ * isso o campo focado pode continuar coberto quando o teclado aparece.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun Modifier.trazerParaVisivelAoFocar(): Modifier {
+    val requisitante = remember { BringIntoViewRequester() }
+    var focado by remember { mutableStateOf(false) }
+    val tecladoVisivel = WindowInsets.isImeVisible
+
+    LaunchedEffect(tecladoVisivel, focado) {
+        if (tecladoVisivel && focado) {
+            requisitante.bringIntoView()
+        }
+    }
+
+    return this
+        .bringIntoViewRequester(requisitante)
+        .onFocusEvent { focado = it.isFocused }
+}
 
 @Composable
 internal fun CartaoSecao(
@@ -112,7 +146,7 @@ internal fun SecaoValorInvestido(
             textStyle = MaterialTheme.typography.titleLarge,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
         )
         OutlinedTextField(
             value = aporteMensal,
@@ -121,7 +155,7 @@ internal fun SecaoValorInvestido(
             leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
         )
     }
 }
@@ -162,7 +196,7 @@ internal fun SecaoRentabilidade(
                 leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -176,7 +210,7 @@ internal fun SecaoRentabilidade(
                     leadingIcon = { Icon(Icons.Filled.Payments, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).trazerParaVisivelAoFocar()
                 )
                 if (carregandoCdi) {
                     Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
@@ -202,7 +236,7 @@ internal fun SecaoRentabilidade(
                 leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
             )
         }
     }
@@ -233,7 +267,7 @@ internal fun SecaoPrazo(
                 label = { Text("Prazo") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).trazerParaVisivelAoFocar()
             )
             ExposedDropdownMenuBox(
                 expanded = unidadeExpandida,
