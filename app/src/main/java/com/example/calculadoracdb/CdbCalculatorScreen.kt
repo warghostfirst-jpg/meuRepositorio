@@ -118,11 +118,29 @@ internal fun CdbCalculatorScreen(
 
     val corSchemeBase = MaterialTheme.colorScheme
     val corSchemePersonalizado = corSchemeBase.copy(
+        primary = coresPersonalizadas.primaria ?: corSchemeBase.primary,
+        onPrimary = coresPersonalizadas.primaria?.corDeContraste() ?: corSchemeBase.onPrimary,
+        primaryContainer = coresPersonalizadas.primaria ?: corSchemeBase.primaryContainer,
+        onPrimaryContainer = coresPersonalizadas.primaria?.corDeContraste() ?: corSchemeBase.onPrimaryContainer,
+        secondary = coresPersonalizadas.secundaria ?: corSchemeBase.secondary,
+        onSecondary = coresPersonalizadas.secundaria?.corDeContraste() ?: corSchemeBase.onSecondary,
+        secondaryContainer = coresPersonalizadas.secundaria ?: corSchemeBase.secondaryContainer,
+        onSecondaryContainer = coresPersonalizadas.secundaria?.corDeContraste() ?: corSchemeBase.onSecondaryContainer,
+        tertiary = coresPersonalizadas.terciaria ?: corSchemeBase.tertiary,
+        onTertiary = coresPersonalizadas.terciaria?.corDeContraste() ?: corSchemeBase.onTertiary,
+        tertiaryContainer = coresPersonalizadas.terciaria ?: corSchemeBase.tertiaryContainer,
+        onTertiaryContainer = coresPersonalizadas.terciaria?.corDeContraste() ?: corSchemeBase.onTertiaryContainer,
         background = coresPersonalizadas.fundo ?: corSchemeBase.background,
-        surface = coresPersonalizadas.fundo ?: corSchemeBase.surface,
         onBackground = coresPersonalizadas.texto ?: corSchemeBase.onBackground,
+        surface = coresPersonalizadas.superficie ?: corSchemeBase.surface,
         onSurface = coresPersonalizadas.texto ?: corSchemeBase.onSurface,
-        outline = coresPersonalizadas.borda ?: corSchemeBase.outline
+        surfaceVariant = coresPersonalizadas.superficie ?: corSchemeBase.surfaceVariant,
+        onSurfaceVariant = coresPersonalizadas.texto ?: corSchemeBase.onSurfaceVariant,
+        outline = coresPersonalizadas.borda ?: corSchemeBase.outline,
+        error = coresPersonalizadas.erro ?: corSchemeBase.error,
+        onError = coresPersonalizadas.erro?.corDeContraste() ?: corSchemeBase.onError,
+        errorContainer = coresPersonalizadas.erro ?: corSchemeBase.errorContainer,
+        onErrorContainer = coresPersonalizadas.erro?.corDeContraste() ?: corSchemeBase.onErrorContainer
     )
 
     MaterialTheme(colorScheme = corSchemePersonalizado, typography = MaterialTheme.typography) {

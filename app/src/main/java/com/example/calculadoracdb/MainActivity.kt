@@ -30,9 +30,14 @@ class MainActivity : ComponentActivity() {
             var coresPersonalizadas by remember {
                 mutableStateOf(
                     CoresPersonalizadas(
+                        primaria = preferencias.corSalva(CHAVE_COR_PRIMARIA),
+                        secundaria = preferencias.corSalva(CHAVE_COR_SECUNDARIA),
+                        terciaria = preferencias.corSalva(CHAVE_COR_TERCIARIA),
                         fundo = preferencias.corSalva(CHAVE_COR_FUNDO),
+                        superficie = preferencias.corSalva(CHAVE_COR_SUPERFICIE),
                         texto = preferencias.corSalva(CHAVE_COR_TEXTO),
-                        borda = preferencias.corSalva(CHAVE_COR_BORDA)
+                        borda = preferencias.corSalva(CHAVE_COR_BORDA),
+                        erro = preferencias.corSalva(CHAVE_COR_ERRO)
                     )
                 )
             }
@@ -78,9 +83,14 @@ class MainActivity : ComponentActivity() {
                     onCoresPersonalizadasChange = { novasCores ->
                         coresPersonalizadas = novasCores
                         preferencias.edit()
+                            .salvarCor(CHAVE_COR_PRIMARIA, novasCores.primaria)
+                            .salvarCor(CHAVE_COR_SECUNDARIA, novasCores.secundaria)
+                            .salvarCor(CHAVE_COR_TERCIARIA, novasCores.terciaria)
                             .salvarCor(CHAVE_COR_FUNDO, novasCores.fundo)
+                            .salvarCor(CHAVE_COR_SUPERFICIE, novasCores.superficie)
                             .salvarCor(CHAVE_COR_TEXTO, novasCores.texto)
                             .salvarCor(CHAVE_COR_BORDA, novasCores.borda)
+                            .salvarCor(CHAVE_COR_ERRO, novasCores.erro)
                             .apply()
                     },
                     configuracoesImposto = configuracoesImposto,
