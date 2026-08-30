@@ -32,12 +32,28 @@ class MainActivity : ComponentActivity() {
                     CoresPersonalizadas(
                         primaria = preferencias.corSalva(CHAVE_COR_PRIMARIA),
                         secundaria = preferencias.corSalva(CHAVE_COR_SECUNDARIA),
-                        terciaria = preferencias.corSalva(CHAVE_COR_TERCIARIA),
                         fundo = preferencias.corSalva(CHAVE_COR_FUNDO),
                         superficie = preferencias.corSalva(CHAVE_COR_SUPERFICIE),
-                        texto = preferencias.corSalva(CHAVE_COR_TEXTO),
+                        letras = preferencias.corSalva(CHAVE_COR_LETRAS),
+                        numeros = preferencias.corSalva(CHAVE_COR_NUMEROS),
+                        icones = preferencias.corSalva(CHAVE_COR_ICONES),
                         borda = preferencias.corSalva(CHAVE_COR_BORDA),
                         erro = preferencias.corSalva(CHAVE_COR_ERRO)
+                    )
+                )
+            }
+            var coresGrafico by remember {
+                mutableStateOf(
+                    CoresGrafico(
+                        capital = preferencias.corSalva(CHAVE_COR_GRAFICO_CAPITAL),
+                        aportado = preferencias.corSalva(CHAVE_COR_GRAFICO_APORTADO),
+                        rendimentoBruto = preferencias.corSalva(CHAVE_COR_GRAFICO_RENDIMENTO_BRUTO),
+                        valorLiquido = preferencias.corSalva(CHAVE_COR_GRAFICO_VALOR_LIQUIDO),
+                        rendimentoLiquido = preferencias.corSalva(CHAVE_COR_GRAFICO_RENDIMENTO_LIQUIDO),
+                        iof = preferencias.corSalva(CHAVE_COR_GRAFICO_IOF),
+                        ir = preferencias.corSalva(CHAVE_COR_GRAFICO_IR),
+                        rentabilidadeLiquida = preferencias.corSalva(CHAVE_COR_GRAFICO_RENTABILIDADE_LIQUIDA),
+                        aliquotaIr = preferencias.corSalva(CHAVE_COR_GRAFICO_ALIQUOTA_IR)
                     )
                 )
             }
@@ -85,12 +101,28 @@ class MainActivity : ComponentActivity() {
                         preferencias.edit()
                             .salvarCor(CHAVE_COR_PRIMARIA, novasCores.primaria)
                             .salvarCor(CHAVE_COR_SECUNDARIA, novasCores.secundaria)
-                            .salvarCor(CHAVE_COR_TERCIARIA, novasCores.terciaria)
                             .salvarCor(CHAVE_COR_FUNDO, novasCores.fundo)
                             .salvarCor(CHAVE_COR_SUPERFICIE, novasCores.superficie)
-                            .salvarCor(CHAVE_COR_TEXTO, novasCores.texto)
+                            .salvarCor(CHAVE_COR_LETRAS, novasCores.letras)
+                            .salvarCor(CHAVE_COR_NUMEROS, novasCores.numeros)
+                            .salvarCor(CHAVE_COR_ICONES, novasCores.icones)
                             .salvarCor(CHAVE_COR_BORDA, novasCores.borda)
                             .salvarCor(CHAVE_COR_ERRO, novasCores.erro)
+                            .apply()
+                    },
+                    coresGrafico = coresGrafico,
+                    onCoresGraficoChange = { novasCores ->
+                        coresGrafico = novasCores
+                        preferencias.edit()
+                            .salvarCor(CHAVE_COR_GRAFICO_CAPITAL, novasCores.capital)
+                            .salvarCor(CHAVE_COR_GRAFICO_APORTADO, novasCores.aportado)
+                            .salvarCor(CHAVE_COR_GRAFICO_RENDIMENTO_BRUTO, novasCores.rendimentoBruto)
+                            .salvarCor(CHAVE_COR_GRAFICO_VALOR_LIQUIDO, novasCores.valorLiquido)
+                            .salvarCor(CHAVE_COR_GRAFICO_RENDIMENTO_LIQUIDO, novasCores.rendimentoLiquido)
+                            .salvarCor(CHAVE_COR_GRAFICO_IOF, novasCores.iof)
+                            .salvarCor(CHAVE_COR_GRAFICO_IR, novasCores.ir)
+                            .salvarCor(CHAVE_COR_GRAFICO_RENTABILIDADE_LIQUIDA, novasCores.rentabilidadeLiquida)
+                            .salvarCor(CHAVE_COR_GRAFICO_ALIQUOTA_IR, novasCores.aliquotaIr)
                             .apply()
                     },
                     configuracoesImposto = configuracoesImposto,

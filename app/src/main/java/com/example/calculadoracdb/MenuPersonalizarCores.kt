@@ -71,6 +71,8 @@ private val paletaCores: List<Color?> = listOf(
 internal fun MenuPersonalizarCores(
     coresPersonalizadas: CoresPersonalizadas,
     onCoresPersonalizadasChange: (CoresPersonalizadas) -> Unit,
+    coresGrafico: CoresGrafico,
+    onCoresGraficoChange: (CoresGrafico) -> Unit,
     onFechar: () -> Unit
 ) {
     Column(
@@ -87,7 +89,7 @@ internal fun MenuPersonalizarCores(
         ) {
             Text("Personalizar aparência", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             IconButton(onClick = onFechar) {
-                Icon(Icons.Filled.Close, contentDescription = "Fechar menu")
+                Icon(Icons.Filled.Close, contentDescription = "Fechar menu", tint = LocalCorIcones.current)
             }
         }
 
@@ -104,12 +106,6 @@ internal fun MenuPersonalizarCores(
         )
 
         SeletorDeCor(
-            titulo = "Cor terciária",
-            corSelecionada = coresPersonalizadas.terciaria,
-            aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(terciaria = it)) }
-        )
-
-        SeletorDeCor(
             titulo = "Cor de fundo",
             corSelecionada = coresPersonalizadas.fundo,
             aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(fundo = it)) }
@@ -122,9 +118,21 @@ internal fun MenuPersonalizarCores(
         )
 
         SeletorDeCor(
-            titulo = "Cor do texto",
-            corSelecionada = coresPersonalizadas.texto,
-            aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(texto = it)) }
+            titulo = "Cor das letras",
+            corSelecionada = coresPersonalizadas.letras,
+            aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(letras = it)) }
+        )
+
+        SeletorDeCor(
+            titulo = "Cor dos números",
+            corSelecionada = coresPersonalizadas.numeros,
+            aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(numeros = it)) }
+        )
+
+        SeletorDeCor(
+            titulo = "Cor dos ícones",
+            corSelecionada = coresPersonalizadas.icones,
+            aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(icones = it)) }
         )
 
         SeletorDeCor(
@@ -141,8 +149,31 @@ internal fun MenuPersonalizarCores(
 
         HorizontalDivider()
 
+        Text("Cores do gráfico", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+        SerieValor.entries.forEach { serie ->
+            SeletorDeCor(
+                titulo = serie.rotulo,
+                corSelecionada = coresGrafico.corPersonalizada(serie),
+                aoSelecionar = { onCoresGraficoChange(coresGrafico.comCorPersonalizada(serie, it)) }
+            )
+        }
+
+        SeriePercentual.entries.forEach { serie ->
+            SeletorDeCor(
+                titulo = serie.rotulo,
+                corSelecionada = coresGrafico.corPersonalizada(serie),
+                aoSelecionar = { onCoresGraficoChange(coresGrafico.comCorPersonalizada(serie, it)) }
+            )
+        }
+
+        HorizontalDivider()
+
         TextButton(
-            onClick = { onCoresPersonalizadasChange(CoresPersonalizadas()) },
+            onClick = {
+                onCoresPersonalizadasChange(CoresPersonalizadas())
+                onCoresGraficoChange(CoresGrafico())
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Restaurar cores padrão")

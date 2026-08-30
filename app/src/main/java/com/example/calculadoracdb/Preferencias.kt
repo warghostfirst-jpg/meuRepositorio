@@ -1,6 +1,7 @@
 package com.example.calculadoracdb
 
 import android.content.SharedPreferences
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
@@ -10,10 +11,11 @@ internal const val PREFERENCIAS_APP = "calculadora_cdb_preferencias"
 internal const val CHAVE_TEMA_ESCURO = "tema_escuro"
 internal const val CHAVE_COR_PRIMARIA = "cor_primaria"
 internal const val CHAVE_COR_SECUNDARIA = "cor_secundaria"
-internal const val CHAVE_COR_TERCIARIA = "cor_terciaria"
 internal const val CHAVE_COR_FUNDO = "cor_fundo"
 internal const val CHAVE_COR_SUPERFICIE = "cor_superficie"
-internal const val CHAVE_COR_TEXTO = "cor_texto"
+internal const val CHAVE_COR_LETRAS = "cor_texto"
+internal const val CHAVE_COR_NUMEROS = "cor_numeros"
+internal const val CHAVE_COR_ICONES = "cor_icones"
 internal const val CHAVE_COR_BORDA = "cor_borda"
 internal const val CHAVE_COR_ERRO = "cor_erro"
 internal const val CHAVE_IMPOSTO_PERSONALIZAR_IR = "imposto_personalizar_ir"
@@ -34,12 +36,42 @@ internal const val CHAVE_HISTORICO_MOSTRAR_RENTABILIDADE = "historico_mostrar_re
 internal data class CoresPersonalizadas(
     val primaria: Color? = null,
     val secundaria: Color? = null,
-    val terciaria: Color? = null,
     val fundo: Color? = null,
     val superficie: Color? = null,
-    val texto: Color? = null,
+    val letras: Color? = null,
+    val numeros: Color? = null,
+    val icones: Color? = null,
     val borda: Color? = null,
     val erro: Color? = null
+)
+
+/** Cor aplicada aos valores numéricos (moeda, percentuais, datas) exibidos no app. */
+internal val LocalCorNumeros = staticCompositionLocalOf { Color.Unspecified }
+
+/** Cor aplicada aos ícones de uso geral da interface. */
+internal val LocalCorIcones = staticCompositionLocalOf { Color.Unspecified }
+
+internal const val CHAVE_COR_GRAFICO_CAPITAL = "cor_grafico_capital"
+internal const val CHAVE_COR_GRAFICO_APORTADO = "cor_grafico_aportado"
+internal const val CHAVE_COR_GRAFICO_RENDIMENTO_BRUTO = "cor_grafico_rendimento_bruto"
+internal const val CHAVE_COR_GRAFICO_VALOR_LIQUIDO = "cor_grafico_valor_liquido"
+internal const val CHAVE_COR_GRAFICO_RENDIMENTO_LIQUIDO = "cor_grafico_rendimento_liquido"
+internal const val CHAVE_COR_GRAFICO_IOF = "cor_grafico_iof"
+internal const val CHAVE_COR_GRAFICO_IR = "cor_grafico_ir"
+internal const val CHAVE_COR_GRAFICO_RENTABILIDADE_LIQUIDA = "cor_grafico_rentabilidade_liquida"
+internal const val CHAVE_COR_GRAFICO_ALIQUOTA_IR = "cor_grafico_aliquota_ir"
+
+/** Cores personalizáveis de cada série exibida no gráfico de evolução da simulação. */
+internal data class CoresGrafico(
+    val capital: Color? = null,
+    val aportado: Color? = null,
+    val rendimentoBruto: Color? = null,
+    val valorLiquido: Color? = null,
+    val rendimentoLiquido: Color? = null,
+    val iof: Color? = null,
+    val ir: Color? = null,
+    val rentabilidadeLiquida: Color? = null,
+    val aliquotaIr: Color? = null
 )
 
 /** Cor de texto/ícone com bom contraste sobre [this], usada ao aplicar cores personalizadas. */

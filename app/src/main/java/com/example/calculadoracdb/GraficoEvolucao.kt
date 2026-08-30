@@ -57,7 +57,7 @@ private enum class ModoGrafico(val rotulo: String) {
     PERCENTUAL("Rentabilidade (%)")
 }
 
-private enum class SerieValor(val rotulo: String, val padraoAtiva: Boolean, val valor: (PontoEvolucao) -> Double) {
+internal enum class SerieValor(val rotulo: String, val padraoAtiva: Boolean, val valor: (PontoEvolucao) -> Double) {
     CAPITAL("Capital (bruto)", true, { it.valorBruto }),
     APORTADO("Total aportado", true, { it.totalAportado }),
     RENDIMENTO_BRUTO("Rendimento bruto", true, { it.rendimentoBruto }),
@@ -67,30 +67,62 @@ private enum class SerieValor(val rotulo: String, val padraoAtiva: Boolean, val 
     IR("IR", false, { it.irValor })
 }
 
-private enum class SeriePercentual(val rotulo: String, val padraoAtiva: Boolean, val valor: (PontoEvolucao) -> Double) {
+internal enum class SeriePercentual(val rotulo: String, val padraoAtiva: Boolean, val valor: (PontoEvolucao) -> Double) {
     RENTABILIDADE_LIQUIDA("Rentabilidade líquida", true, { it.rentabilidadeLiquidaPercentual }),
     ALIQUOTA_IR("Alíquota de IR", false, { it.aliquotaIr * 100.0 })
 }
 
-@Composable
-private fun corDaSerieValor(serie: SerieValor): Color = when (serie) {
-    SerieValor.CAPITAL -> MaterialTheme.colorScheme.primary
-    SerieValor.APORTADO -> MaterialTheme.colorScheme.tertiary
-    SerieValor.RENDIMENTO_BRUTO -> MaterialTheme.colorScheme.secondary
-    SerieValor.VALOR_LIQUIDO -> Color(0xFF00BFA5)
-    SerieValor.RENDIMENTO_LIQUIDO -> Color(0xFF7C4DFF)
-    SerieValor.IOF -> MaterialTheme.colorScheme.error
-    SerieValor.IR -> Color(0xFFFFB300)
+internal fun CoresGrafico.corPersonalizada(serie: SerieValor): Color? = when (serie) {
+    SerieValor.CAPITAL -> capital
+    SerieValor.APORTADO -> aportado
+    SerieValor.RENDIMENTO_BRUTO -> rendimentoBruto
+    SerieValor.VALOR_LIQUIDO -> valorLiquido
+    SerieValor.RENDIMENTO_LIQUIDO -> rendimentoLiquido
+    SerieValor.IOF -> iof
+    SerieValor.IR -> ir
+}
+
+internal fun CoresGrafico.comCorPersonalizada(serie: SerieValor, cor: Color?): CoresGrafico = when (serie) {
+    SerieValor.CAPITAL -> copy(capital = cor)
+    SerieValor.APORTADO -> copy(aportado = cor)
+    SerieValor.RENDIMENTO_BRUTO -> copy(rendimentoBruto = cor)
+    SerieValor.VALOR_LIQUIDO -> copy(valorLiquido = cor)
+    SerieValor.RENDIMENTO_LIQUIDO -> copy(rendimentoLiquido = cor)
+    SerieValor.IOF -> copy(iof = cor)
+    SerieValor.IR -> copy(ir = cor)
+}
+
+internal fun CoresGrafico.corPersonalizada(serie: SeriePercentual): Color? = when (serie) {
+    SeriePercentual.RENTABILIDADE_LIQUIDA -> rentabilidadeLiquida
+    SeriePercentual.ALIQUOTA_IR -> aliquotaIr
+}
+
+internal fun CoresGrafico.comCorPersonalizada(serie: SeriePercentual, cor: Color?): CoresGrafico = when (serie) {
+    SeriePercentual.RENTABILIDADE_LIQUIDA -> copy(rentabilidadeLiquida = cor)
+    SeriePercentual.ALIQUOTA_IR -> copy(aliquotaIr = cor)
 }
 
 @Composable
-private fun corDaSeriePercentual(serie: SeriePercentual): Color = when (serie) {
-    SeriePercentual.RENTABILIDADE_LIQUIDA -> MaterialTheme.colorScheme.primary
-    SeriePercentual.ALIQUOTA_IR -> Color(0xFFFFB300)
-}
+private fun corDaSerieValor(serie: SerieValor, coresGrafico: CoresGrafico): Color =
+    coresGrafico.corPersonalizada(serie) ?: when (serie) {
+        SerieValor.CAPITAL -> MaterialTheme.colorScheme.primary
+        SerieValor.APORTADO -> MaterialTheme.colorScheme.tertiary
+        SerieValor.RENDIMENTO_BRUTO -> MaterialTheme.colorScheme.secondary
+        SerieValor.VALOR_LIQUIDO -> Color(0xFF00BFA5)
+        SerieValor.RENDIMENTO_LIQUIDO -> Color(0xFF7C4DFF)
+        SerieValor.IOF -> MaterialTheme.colorScheme.error
+        SerieValor.IR -> Color(0xFFFFB300)
+    }
 
 @Composable
-internal fun ModalGraficoEvolucao(resultado: ResultadoCdb, onFechar: () -> Unit) {
+private fun corDaSeriePercentual(serie: SeriePercentual, coresGrafico: CoresGrafico): Color =
+    coresGrafico.corPersonalizada(serie) ?: when (serie) {
+        SeriePercentual.RENTABILIDADE_LIQUIDA -> MaterialTheme.colorScheme.primary
+        SeriePercentual.ALIQUOTA_IR -> Color(0xFFFFB300)
+    }
+
+@Composable
+internal fun ModalGraficoEvolucao(resultado: ResultadoCdb, coresGrafico: CoresGrafico, onFechar: () -> Unit) {
     Dialog(
         onDismissRequest = onFechar,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -118,7 +150,7 @@ internal fun ModalGraficoEvolucao(resultado: ResultadoCdb, onFechar: () -> Unit)
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onFechar) {
-                        Icon(Icons.Filled.Close, contentDescription = "Fechar gráfico")
+                        Icon(Icons.Filled.Close, contentDescription = "Fechar gráfico", tint = LocalCorIcones.current)
                     }
                 }
 
@@ -130,7 +162,7 @@ internal fun ModalGraficoEvolucao(resultado: ResultadoCdb, onFechar: () -> Unit)
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    GraficoEvolucao(resultado.evolucao)
+                    GraficoEvolucao(resultado.evolucao, coresGrafico)
                 }
             }
         }
@@ -139,7 +171,7 @@ internal fun ModalGraficoEvolucao(resultado: ResultadoCdb, onFechar: () -> Unit)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GraficoEvolucao(pontos: List<PontoEvolucao>) {
+private fun GraficoEvolucao(pontos: List<PontoEvolucao>, coresGrafico: CoresGrafico) {
     var modo by remember { mutableStateOf(ModoGrafico.VALORES) }
     var seriesValorAtivas by remember {
         mutableStateOf(SerieValor.entries.filter { it.padraoAtiva }.toSet())
@@ -163,7 +195,7 @@ private fun GraficoEvolucao(pontos: List<PontoEvolucao>) {
 
         when (modo) {
             ModoGrafico.VALORES -> {
-                val seriesComCores = SerieValor.entries.associateWith { corDaSerieValor(it) }
+                val seriesComCores = SerieValor.entries.associateWith { corDaSerieValor(it, coresGrafico) }
                 val valorMaximo = pontos.maxOf { it.valorBruto }.coerceAtLeast(1.0)
                 val valoresEixoY = (QUANTIDADE_LINHAS_GUIA downTo 0).map { i -> valorMaximo * i / QUANTIDADE_LINHAS_GUIA }
 
@@ -200,7 +232,7 @@ private fun GraficoEvolucao(pontos: List<PontoEvolucao>) {
             }
 
             ModoGrafico.PERCENTUAL -> {
-                val seriesComCores = SeriePercentual.entries.associateWith { corDaSeriePercentual(it) }
+                val seriesComCores = SeriePercentual.entries.associateWith { corDaSeriePercentual(it, coresGrafico) }
                 val valorMaximo = pontos.maxOf { p -> SeriePercentual.entries.maxOf { it.valor(p) } }
                     .coerceAtLeast(1.0)
                 val valoresEixoY = (QUANTIDADE_LINHAS_GUIA downTo 0).map { i -> valorMaximo * i / QUANTIDADE_LINHAS_GUIA }
@@ -265,7 +297,7 @@ private fun EixosEGrafico(
                 horizontalAlignment = Alignment.End
             ) {
                 rotulosEixoY.forEach { rotulo ->
-                    Text(rotulo, style = MaterialTheme.typography.labelSmall, color = corEixo)
+                    Text(rotulo, style = MaterialTheme.typography.labelSmall, color = LocalCorNumeros.current)
                 }
             }
 
@@ -317,7 +349,7 @@ private fun EixosEGrafico(
                     Text(
                         pontos[indice].data.format(formatoMesAno),
                         style = MaterialTheme.typography.labelSmall,
-                        color = corEixo
+                        color = LocalCorNumeros.current
                     )
                 }
             }

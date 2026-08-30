@@ -34,7 +34,8 @@ internal fun BotaoInfo(
         Icon(
             Icons.AutoMirrored.Filled.HelpOutline,
             contentDescription = descricao,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
+            tint = LocalCorIcones.current
         )
     }
 
@@ -44,7 +45,7 @@ internal fun BotaoInfo(
             confirmButton = {
                 TextButton(onClick = { mostrarInfo = false }) { Text("Entendi") }
             },
-            icon = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null) },
+            icon = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, tint = LocalCorIcones.current) },
             title = { Text(titulo) },
             text = {
                 Column(

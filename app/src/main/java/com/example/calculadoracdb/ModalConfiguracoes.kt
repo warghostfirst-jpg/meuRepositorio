@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -66,7 +67,7 @@ internal fun ModalConfiguracoes(
                 ) {
                     Text("Configurações", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     IconButton(onClick = onFechar) {
-                        Icon(Icons.Filled.Close, contentDescription = "Fechar configurações")
+                        Icon(Icons.Filled.Close, contentDescription = "Fechar configurações", tint = LocalCorIcones.current)
                     }
                 }
 
@@ -101,9 +102,13 @@ internal fun ModalConfiguracoes(
                             onConfiguracoesChange(configuracoes.copy(aliquotaIrPercentual = texto))
                         },
                         label = { Text("Alíquota de IR (%)") },
-                        leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null, tint = LocalCorIcones.current) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = LocalCorNumeros.current,
+                            unfocusedTextColor = LocalCorNumeros.current
+                        ),
                         modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
                     )
                 }
@@ -141,9 +146,13 @@ internal fun ModalConfiguracoes(
                             onConfiguracoesChange(configuracoes.copy(aliquotaIofPercentual = texto))
                         },
                         label = { Text("Alíquota de IOF (%)") },
-                        leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null, tint = LocalCorIcones.current) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = LocalCorNumeros.current,
+                            unfocusedTextColor = LocalCorNumeros.current
+                        ),
                         modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
                     )
                     Text(

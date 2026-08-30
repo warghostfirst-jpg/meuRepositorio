@@ -37,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,6 +72,8 @@ internal fun CdbCalculatorScreen(
     onAlternarTema: () -> Unit,
     coresPersonalizadas: CoresPersonalizadas,
     onCoresPersonalizadasChange: (CoresPersonalizadas) -> Unit,
+    coresGrafico: CoresGrafico,
+    onCoresGraficoChange: (CoresGrafico) -> Unit,
     configuracoesImposto: ConfiguracoesImposto,
     onConfiguracoesImpostoChange: (ConfiguracoesImposto) -> Unit,
     camposHistorico: CamposHistorico,
@@ -126,16 +129,12 @@ internal fun CdbCalculatorScreen(
         onSecondary = coresPersonalizadas.secundaria?.corDeContraste() ?: corSchemeBase.onSecondary,
         secondaryContainer = coresPersonalizadas.secundaria ?: corSchemeBase.secondaryContainer,
         onSecondaryContainer = coresPersonalizadas.secundaria?.corDeContraste() ?: corSchemeBase.onSecondaryContainer,
-        tertiary = coresPersonalizadas.terciaria ?: corSchemeBase.tertiary,
-        onTertiary = coresPersonalizadas.terciaria?.corDeContraste() ?: corSchemeBase.onTertiary,
-        tertiaryContainer = coresPersonalizadas.terciaria ?: corSchemeBase.tertiaryContainer,
-        onTertiaryContainer = coresPersonalizadas.terciaria?.corDeContraste() ?: corSchemeBase.onTertiaryContainer,
         background = coresPersonalizadas.fundo ?: corSchemeBase.background,
-        onBackground = coresPersonalizadas.texto ?: corSchemeBase.onBackground,
+        onBackground = coresPersonalizadas.letras ?: corSchemeBase.onBackground,
         surface = coresPersonalizadas.superficie ?: corSchemeBase.surface,
-        onSurface = coresPersonalizadas.texto ?: corSchemeBase.onSurface,
+        onSurface = coresPersonalizadas.letras ?: corSchemeBase.onSurface,
         surfaceVariant = coresPersonalizadas.superficie ?: corSchemeBase.surfaceVariant,
-        onSurfaceVariant = coresPersonalizadas.texto ?: corSchemeBase.onSurfaceVariant,
+        onSurfaceVariant = coresPersonalizadas.letras ?: corSchemeBase.onSurfaceVariant,
         outline = coresPersonalizadas.borda ?: corSchemeBase.outline,
         error = coresPersonalizadas.erro ?: corSchemeBase.error,
         onError = coresPersonalizadas.erro?.corDeContraste() ?: corSchemeBase.onError,
@@ -144,6 +143,10 @@ internal fun CdbCalculatorScreen(
     )
 
     MaterialTheme(colorScheme = corSchemePersonalizado, typography = MaterialTheme.typography) {
+        CompositionLocalProvider(
+            LocalCorNumeros provides (coresPersonalizadas.numeros ?: corSchemePersonalizado.onSurface),
+            LocalCorIcones provides (coresPersonalizadas.icones ?: corSchemePersonalizado.onSurface)
+        ) {
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -154,6 +157,8 @@ internal fun CdbCalculatorScreen(
                     MenuPersonalizarCores(
                         coresPersonalizadas = coresPersonalizadas,
                         onCoresPersonalizadasChange = onCoresPersonalizadasChange,
+                        coresGrafico = coresGrafico,
+                        onCoresGraficoChange = onCoresGraficoChange,
                         onFechar = { coroutineScope.launch { drawerState.close() } }
                     )
                 }
@@ -178,7 +183,11 @@ internal fun CdbCalculatorScreen(
                         TopAppBar(
                             navigationIcon = {
                                 IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                                    Icon(Icons.Filled.Palette, contentDescription = "Abrir personalização de cores")
+                                    Icon(
+                                        Icons.Filled.Palette,
+                                        contentDescription = "Abrir personalização de cores",
+                                        tint = LocalCorIcones.current
+                                    )
                                 }
                             },
                             title = {
@@ -195,15 +204,24 @@ internal fun CdbCalculatorScreen(
                             },
                             actions = {
                                 IconButton(onClick = { mostrarConfiguracoes = true }) {
-                                    Icon(Icons.Filled.Settings, contentDescription = "Configurações de IR e IOF")
+                                    Icon(
+                                        Icons.Filled.Settings,
+                                        contentDescription = "Configurações de IR e IOF",
+                                        tint = LocalCorIcones.current
+                                    )
                                 }
                                 IconButton(onClick = { mostrarHistorico = true }) {
-                                    Icon(Icons.Filled.History, contentDescription = "Ver histórico de simulações")
+                                    Icon(
+                                        Icons.Filled.History,
+                                        contentDescription = "Ver histórico de simulações",
+                                        tint = LocalCorIcones.current
+                                    )
                                 }
                                 IconButton(onClick = onAlternarTema) {
                                     Icon(
                                         if (temaEscuro) Icons.Filled.LightMode else Icons.Filled.DarkMode,
-                                        contentDescription = if (temaEscuro) "Ativar tema claro" else "Ativar tema escuro"
+                                        contentDescription = if (temaEscuro) "Ativar tema claro" else "Ativar tema escuro",
+                                        tint = LocalCorIcones.current
                                     )
                                 }
                             },
@@ -331,7 +349,7 @@ internal fun CdbCalculatorScreen(
         }
 
         resultado?.let { valor ->
-            ModalResultado(resultado = valor, onFechar = { resultado = null })
+            ModalResultado(resultado = valor, coresGrafico = coresGrafico, onFechar = { resultado = null })
         }
 
         if (mostrarConfiguracoes) {
@@ -348,6 +366,7 @@ internal fun CdbCalculatorScreen(
             ModalHistorico(
                 itens = historico,
                 camposHistorico = camposHistorico,
+                coresGrafico = coresGrafico,
                 onFechar = { mostrarHistorico = false },
                 onVerItem = { item ->
                     resultado = item.resultado
@@ -363,6 +382,7 @@ internal fun CdbCalculatorScreen(
                 }
             )
         }
+        }
     }
 }
 
@@ -371,6 +391,7 @@ internal fun CdbCalculatorScreen(
 private fun CdbCalculatorScreenPreview() {
     var temaEscuro by remember { mutableStateOf(false) }
     var coresPersonalizadas by remember { mutableStateOf(CoresPersonalizadas()) }
+    var coresGrafico by remember { mutableStateOf(CoresGrafico()) }
     var configuracoesImposto by remember { mutableStateOf(ConfiguracoesImposto()) }
     var camposHistorico by remember { mutableStateOf(CamposHistorico()) }
     CalculadoraCDBTheme(darkTheme = temaEscuro) {
@@ -379,6 +400,8 @@ private fun CdbCalculatorScreenPreview() {
             onAlternarTema = { temaEscuro = !temaEscuro },
             coresPersonalizadas = coresPersonalizadas,
             onCoresPersonalizadasChange = { coresPersonalizadas = it },
+            coresGrafico = coresGrafico,
+            onCoresGraficoChange = { coresGrafico = it },
             configuracoesImposto = configuracoesImposto,
             onConfiguracoesImpostoChange = { configuracoesImposto = it },
             camposHistorico = camposHistorico,

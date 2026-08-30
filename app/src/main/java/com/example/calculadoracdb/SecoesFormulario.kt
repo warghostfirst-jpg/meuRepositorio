@@ -40,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -142,19 +143,27 @@ internal fun SecaoValorInvestido(
             value = valorInvestido,
             onValueChange = onValorChange,
             label = { Text("Valor investido (R$)") },
-            leadingIcon = { Icon(Icons.Filled.AttachMoney, contentDescription = null) },
+            leadingIcon = { Icon(Icons.Filled.AttachMoney, contentDescription = null, tint = LocalCorIcones.current) },
             textStyle = MaterialTheme.typography.titleLarge,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = LocalCorNumeros.current,
+                unfocusedTextColor = LocalCorNumeros.current
+            ),
             modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
         )
         OutlinedTextField(
             value = aporteMensal,
             onValueChange = onAporteMensalChange,
             label = { Text("Aporte mensal (R$)") },
-            leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null) },
+            leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null, tint = LocalCorIcones.current) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = LocalCorNumeros.current,
+                unfocusedTextColor = LocalCorNumeros.current
+            ),
             modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
         )
     }
@@ -193,9 +202,13 @@ internal fun SecaoRentabilidade(
                 value = percentualCdi,
                 onValueChange = onPercentualCdiChange,
                 label = { Text("% do CDI") },
-                leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null, tint = LocalCorIcones.current) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = LocalCorNumeros.current,
+                    unfocusedTextColor = LocalCorNumeros.current
+                ),
                 modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
             )
             Row(
@@ -207,9 +220,13 @@ internal fun SecaoRentabilidade(
                     value = taxaCdi,
                     onValueChange = onTaxaCdiChange,
                     label = { Text("Taxa CDI ao ano (%)") },
-                    leadingIcon = { Icon(Icons.Filled.Payments, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Filled.Payments, contentDescription = null, tint = LocalCorIcones.current) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = LocalCorNumeros.current,
+                        unfocusedTextColor = LocalCorNumeros.current
+                    ),
                     modifier = Modifier.weight(1f).trazerParaVisivelAoFocar()
                 )
                 if (carregandoCdi) {
@@ -233,9 +250,13 @@ internal fun SecaoRentabilidade(
                 value = taxaPrefixada,
                 onValueChange = onTaxaPrefixadaChange,
                 label = { Text("Taxa ao ano (%)") },
-                leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null, tint = LocalCorIcones.current) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = LocalCorNumeros.current,
+                    unfocusedTextColor = LocalCorNumeros.current
+                ),
                 modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
             )
         }
@@ -267,6 +288,10 @@ internal fun SecaoPrazo(
                 label = { Text("Prazo") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = LocalCorNumeros.current,
+                    unfocusedTextColor = LocalCorNumeros.current
+                ),
                 modifier = Modifier.weight(1f).trazerParaVisivelAoFocar()
             )
             ExposedDropdownMenuBox(

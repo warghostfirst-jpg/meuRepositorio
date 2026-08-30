@@ -39,7 +39,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
-internal fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
+internal fun ModalResultado(resultado: ResultadoCdb, coresGrafico: CoresGrafico, onFechar: () -> Unit) {
     var mostrarGrafico by remember { mutableStateOf(false) }
 
     Dialog(
@@ -74,11 +74,12 @@ internal fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
                         IconButton(onClick = { mostrarGrafico = true }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ShowChart,
-                                contentDescription = "Ver gráfico de evolução"
+                                contentDescription = "Ver gráfico de evolução",
+                                tint = LocalCorIcones.current
                             )
                         }
                         IconButton(onClick = onFechar) {
-                            Icon(Icons.Filled.Close, contentDescription = "Fechar resultado")
+                            Icon(Icons.Filled.Close, contentDescription = "Fechar resultado", tint = LocalCorIcones.current)
                         }
                     }
                 }
@@ -90,7 +91,7 @@ internal fun ModalResultado(resultado: ResultadoCdb, onFechar: () -> Unit) {
     }
 
     if (mostrarGrafico) {
-        ModalGraficoEvolucao(resultado = resultado, onFechar = { mostrarGrafico = false })
+        ModalGraficoEvolucao(resultado = resultado, coresGrafico = coresGrafico, onFechar = { mostrarGrafico = false })
     }
 }
 
@@ -198,7 +199,7 @@ private fun LinhaResultado(rotulo: String, valor: String, enfase: Boolean = fals
             valor,
             style = if (enfase) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
             fontWeight = if (enfase) FontWeight.Bold else FontWeight.Normal,
-            color = if (enfase) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            color = if (enfase) MaterialTheme.colorScheme.primary else LocalCorNumeros.current
         )
     }
 }

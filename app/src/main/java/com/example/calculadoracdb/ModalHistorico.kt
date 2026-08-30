@@ -43,6 +43,7 @@ import androidx.compose.ui.window.DialogProperties
 internal fun ModalHistorico(
     itens: List<ItemHistorico>,
     camposHistorico: CamposHistorico,
+    coresGrafico: CoresGrafico,
     onFechar: () -> Unit,
     onVerItem: (ItemHistorico) -> Unit,
     onRemoverItem: (ItemHistorico) -> Unit,
@@ -78,7 +79,7 @@ internal fun ModalHistorico(
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onFechar) {
-                        Icon(Icons.Filled.Close, contentDescription = "Fechar histórico")
+                        Icon(Icons.Filled.Close, contentDescription = "Fechar histórico", tint = LocalCorIcones.current)
                     }
                 }
 
@@ -99,6 +100,7 @@ internal fun ModalHistorico(
                             CartaoItemHistorico(
                                 item = item,
                                 camposHistorico = camposHistorico,
+                                coresGrafico = coresGrafico,
                                 onClick = { onVerItem(item) },
                                 onRemover = { onRemoverItem(item) }
                             )
@@ -109,7 +111,7 @@ internal fun ModalHistorico(
                         onClick = onLimparTudo,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Filled.DeleteSweep, contentDescription = null)
+                        Icon(Icons.Filled.DeleteSweep, contentDescription = null, tint = LocalCorIcones.current)
                         Spacer(modifier = Modifier.size(8.dp))
                         Text("Limpar histórico")
                     }
@@ -123,6 +125,7 @@ internal fun ModalHistorico(
 private fun CartaoItemHistorico(
     item: ItemHistorico,
     camposHistorico: CamposHistorico,
+    coresGrafico: CoresGrafico,
     onClick: () -> Unit,
     onRemover: () -> Unit
 ) {
@@ -145,7 +148,7 @@ private fun CartaoItemHistorico(
                 Text(
                     item.dataHoraCalculo.format(formatoDataHora),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = LocalCorNumeros.current
                 )
                 Text(
                     item.descricaoEntrada,
@@ -163,7 +166,8 @@ private fun CartaoItemHistorico(
             IconButton(onClick = { mostrarGrafico = true }) {
                 Icon(
                     Icons.AutoMirrored.Filled.ShowChart,
-                    contentDescription = "Ver gráfico de evolução"
+                    contentDescription = "Ver gráfico de evolução",
+                    tint = LocalCorIcones.current
                 )
             }
             IconButton(onClick = onRemover) {
@@ -177,7 +181,7 @@ private fun CartaoItemHistorico(
     }
 
     if (mostrarGrafico) {
-        ModalGraficoEvolucao(resultado = item.resultado, onFechar = { mostrarGrafico = false })
+        ModalGraficoEvolucao(resultado = item.resultado, coresGrafico = coresGrafico, onFechar = { mostrarGrafico = false })
     }
 }
 
