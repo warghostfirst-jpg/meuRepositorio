@@ -1,5 +1,6 @@
 package com.example.calculadoracdb
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -70,6 +71,10 @@ internal fun UnidadePrazo.rotulo(): String = when (this) {
 internal fun CdbCalculatorScreen(
     temaEscuro: Boolean,
     onAlternarTema: () -> Unit,
+    anunciosRemovidos: Boolean = true,
+    podeCarregarAnuncios: Boolean = false,
+    precoRemoverAnuncios: String? = null,
+    onComprarRemoverAnuncios: () -> Unit = {},
     coresPersonalizadas: CoresPersonalizadas,
     onCoresPersonalizadasChange: (CoresPersonalizadas) -> Unit,
     coresGrafico: CoresGrafico,
@@ -96,6 +101,8 @@ internal fun CdbCalculatorScreen(
     var mostrarConfiguracoes by remember { mutableStateOf(false) }
 
     val contexto = LocalContext.current
+    val activity = contexto as Activity
+    var calculosDesdeUltimoAnuncio by rememberSaveable { mutableStateOf(0) }
     val historicoRepositorio = remember {
         HistoricoRepositorio(contexto.getSharedPreferences(PREFERENCIAS_APP, Context.MODE_PRIVATE))
     }
@@ -179,6 +186,11 @@ internal fun CdbCalculatorScreen(
             ) {
                 Scaffold(
                     containerColor = Color.Transparent,
+                    bottomBar = {
+                        if (!anunciosRemovidos && podeCarregarAnuncios) {
+                            BannerAnuncio()
+                        }
+                    },
                     topBar = {
                         TopAppBar(
                             navigationIcon = {
@@ -330,6 +342,14 @@ internal fun CdbCalculatorScreen(
                                     )
                                     historicoRepositorio.adicionar(item)
                                     historico = listOf(item) + historico
+
+                                    if (!anunciosRemovidos && podeCarregarAnuncios) {
+                                        calculosDesdeUltimoAnuncio++
+                                        if (calculosDesdeUltimoAnuncio >= FREQUENCIA_INTERSTITIAL) {
+                                            calculosDesdeUltimoAnuncio = 0
+                                            GerenciadorInterstitial.mostrarSeDisponivel(activity) {}
+                                        }
+                                    }
                                 }
                             },
                             shape = RoundedCornerShape(16.dp),
@@ -358,6 +378,9 @@ internal fun CdbCalculatorScreen(
                 onConfiguracoesChange = onConfiguracoesImpostoChange,
                 camposHistorico = camposHistorico,
                 onCamposHistoricoChange = onCamposHistoricoChange,
+                anunciosRemovidos = anunciosRemovidos,
+                precoRemoverAnuncios = precoRemoverAnuncios,
+                onComprarRemoverAnuncios = onComprarRemoverAnuncios,
                 onFechar = { mostrarConfiguracoes = false }
             )
         }

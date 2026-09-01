@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +26,20 @@ class MainActivity : ComponentActivity() {
             val preferencias = remember {
                 contexto.getSharedPreferences(PREFERENCIAS_APP, Context.MODE_PRIVATE)
             }
+            var podeCarregarAnuncios by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                solicitarConsentimentoEInicializarAnuncios(this@MainActivity) { pronto ->
+                    podeCarregarAnuncios = pronto
+                    if (pronto) GerenciadorInterstitial.carregar(this@MainActivity)
+                }
+            }
+            val gerenciadorCompras = remember { GerenciadorCompras(contexto) }
+            DisposableEffect(Unit) {
+                gerenciadorCompras.iniciar()
+                onDispose { gerenciadorCompras.encerrar() }
+            }
+            val anunciosRemovidos by gerenciadorCompras.anunciosRemovidos.collectAsState()
+            val precoRemoverAnuncios by gerenciadorCompras.precoFormatado.collectAsState()
             val temaEscuroDoSistema = isSystemInDarkTheme()
             var temaEscuro by rememberSaveable {
                 mutableStateOf(preferencias.getBoolean(CHAVE_TEMA_ESCURO, temaEscuroDoSistema))
@@ -91,6 +108,10 @@ class MainActivity : ComponentActivity() {
             CalculadoraCDBTheme(darkTheme = temaEscuro) {
                 CdbCalculatorScreen(
                     temaEscuro = temaEscuro,
+                    anunciosRemovidos = anunciosRemovidos,
+                    podeCarregarAnuncios = podeCarregarAnuncios,
+                    precoRemoverAnuncios = precoRemoverAnuncios,
+                    onComprarRemoverAnuncios = { gerenciadorCompras.comprar(this@MainActivity) },
                     onAlternarTema = {
                         temaEscuro = !temaEscuro
                         preferencias.edit().putBoolean(CHAVE_TEMA_ESCURO, temaEscuro).apply()

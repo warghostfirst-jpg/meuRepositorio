@@ -1,6 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -10,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.calculadoracdb"
+        applicationId = "com.jacksondeandrada.calculadoracdb"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
@@ -19,10 +28,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             optimization {
-                enable = false
+                enable = true
+            }
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }
@@ -47,6 +71,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.services.ads)
+    implementation(libs.billing.ktx)
+    implementation(libs.user.messaging.platform)
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

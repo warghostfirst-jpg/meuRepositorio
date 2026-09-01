@@ -32,6 +32,7 @@ internal const val CHAVE_HISTORICO_MOSTRAR_IR = "historico_mostrar_ir"
 internal const val CHAVE_HISTORICO_MOSTRAR_VALOR_LIQUIDO = "historico_mostrar_valor_liquido"
 internal const val CHAVE_HISTORICO_MOSTRAR_RENDIMENTO_LIQUIDO = "historico_mostrar_rendimento_liquido"
 internal const val CHAVE_HISTORICO_MOSTRAR_RENTABILIDADE = "historico_mostrar_rentabilidade"
+internal const val CHAVE_ANUNCIOS_REMOVIDOS = "anuncios_removidos"
 
 internal data class CoresPersonalizadas(
     val primaria: Color? = null,

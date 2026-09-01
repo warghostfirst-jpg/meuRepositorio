@@ -11,8 +11,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Percent
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,6 +41,9 @@ internal fun ModalConfiguracoes(
     onConfiguracoesChange: (ConfiguracoesImposto) -> Unit,
     camposHistorico: CamposHistorico,
     onCamposHistoricoChange: (CamposHistorico) -> Unit,
+    anunciosRemovidos: Boolean = true,
+    precoRemoverAnuncios: String? = null,
+    onComprarRemoverAnuncios: () -> Unit = {},
     onFechar: () -> Unit
 ) {
     Dialog(
@@ -69,6 +74,45 @@ internal fun ModalConfiguracoes(
                     IconButton(onClick = onFechar) {
                         Icon(Icons.Filled.Close, contentDescription = "Fechar configurações", tint = LocalCorIcones.current)
                     }
+                }
+
+                if (!anunciosRemovidos) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Remover anúncios",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                "Compra única, sem anúncios pra sempre.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Button(onClick = onComprarRemoverAnuncios, enabled = precoRemoverAnuncios != null) {
+                            Text(precoRemoverAnuncios ?: "...")
+                        }
+                    }
+                    HorizontalDivider()
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Text(
+                            "Anúncios removidos — obrigado pelo apoio!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    HorizontalDivider()
                 }
 
                 Row(
