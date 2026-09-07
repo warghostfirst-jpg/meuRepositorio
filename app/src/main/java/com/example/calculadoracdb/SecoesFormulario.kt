@@ -141,9 +141,10 @@ internal fun SecaoValorInvestido(
     CartaoSecao(titulo = "Valor investido", icone = Icons.Filled.Savings) {
         OutlinedTextField(
             value = valorInvestido,
-            onValueChange = { onValorChange(formatarValorMonetario(it)) },
+            onValueChange = { onValorChange(it.filter { caractere -> caractere.isDigit() }) },
             label = { Text("Valor investido (R$)") },
             //leadingIcon = { Icon(Icons.Filled.AttachMoney, contentDescription = null, tint = LocalCorIcones.current) },
+            visualTransformation = MascaraValorMonetarioTransformation(),
             textStyle = MaterialTheme.typography.titleLarge,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             shape = RoundedCornerShape(14.dp),
@@ -155,8 +156,7 @@ internal fun SecaoValorInvestido(
         )
         OutlinedTextField(
             value = aporteMensal,
-            //onValueChange = onAporteMensalChange,
-            onValueChange = { onValorChange(formatarValorMonetario(it)) },
+            onValueChange = onAporteMensalChange,
             label = { Text("Aporte mensal (R$)") },
             //leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null, tint = LocalCorIcones.current) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

@@ -84,7 +84,7 @@ internal fun CdbCalculatorScreen(
     camposHistorico: CamposHistorico,
     onCamposHistoricoChange: (CamposHistorico) -> Unit
 ) {
-    var valorInvestido by rememberSaveable { mutableStateOf(formatarValorMonetario("100000")) }
+    var valorInvestido by rememberSaveable { mutableStateOf("100000") }
     var aporteMensal by rememberSaveable { mutableStateOf("0") }
     var tipoRentabilidade by rememberSaveable { mutableStateOf(TipoRentabilidade.POS_FIXADO) }
     var percentualCdi by rememberSaveable { mutableStateOf("102") }

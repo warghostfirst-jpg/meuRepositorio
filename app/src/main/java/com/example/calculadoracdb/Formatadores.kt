@@ -1,5 +1,9 @@
 package com.example.calculadoracdb
 
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -32,8 +36,25 @@ internal fun formatarValorMonetario(digitos: String): String {
     return "R$ ${agruparMilhares(reais)},${centavos.toString().padStart(2, '0')}"
 }
 
-/** Converte um valor já mascarado (ex.: "R$ 1.234,56") para Double, considerando os dígitos como centavos. */
+/** Converte os dígitos brutos (interpretados como centavos) para Double. */
 internal fun String.valorMonetarioParaDouble(): Double {
     val valorCentavos = filter { it.isDigit() }.toLongOrNull() ?: 0L
     return valorCentavos / 100.0
+}
+
+/**
+ * Exibe os dígitos brutos digitados (ex.: "1000") como "R$ 1.000,00", mantendo o valor
+ * do campo em texto puro (sem "R$", pontos ou vírgula) para evitar que a própria máscara
+ * seja relida como dígito digitado.
+ */
+internal class MascaraValorMonetarioTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digitos = text.text.filter { it.isDigit() }
+        val formatado = formatarValorMonetario(digitos)
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int = formatado.length
+            override fun transformedToOriginal(offset: Int): Int = digitos.length
+        }
+        return TransformedText(AnnotatedString(formatado), offsetMapping)
+    }
 }
