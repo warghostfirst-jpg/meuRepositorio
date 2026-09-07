@@ -185,18 +185,18 @@ internal fun SecaoRentabilidade(
     carregandoCdi: Boolean,
     onAtualizarCdi: () -> Unit
 ) {
-    CartaoSecao(titulo = "Tipo de rentabilidade", icone = Icons.AutoMirrored.Filled.TrendingUp) {
+    CartaoSecao(titulo = "Tipo de Renda Fixa", icone = Icons.AutoMirrored.Filled.TrendingUp) {
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             SegmentedButton(
                 selected = tipoRentabilidade == TipoRentabilidade.POS_FIXADO,
                 onClick = { onTipoChange(TipoRentabilidade.POS_FIXADO) },
                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-            ) { Text("Pós-fixado") }
+            ) { Text("CDB/RDB") }
             SegmentedButton(
                 selected = tipoRentabilidade == TipoRentabilidade.PRE_FIXADO,
                 onClick = { onTipoChange(TipoRentabilidade.PRE_FIXADO) },
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-            ) { Text("Pré-fixado") }
+            ) { Text("Tesouro Selic") }
         }
 
         if (tipoRentabilidade == TipoRentabilidade.POS_FIXADO) {
