@@ -156,10 +156,11 @@ internal fun SecaoValorInvestido(
         )
         OutlinedTextField(
             value = aporteMensal,
-            onValueChange = onAporteMensalChange,
+            onValueChange = { onAporteMensalChange(it.filter { caractere -> caractere.isDigit() }) },
             label = { Text("Aporte mensal (R$)") },
             //leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null, tint = LocalCorIcones.current) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            visualTransformation = MascaraValorMonetarioTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = LocalCorNumeros.current,

@@ -285,8 +285,7 @@ internal fun CdbCalculatorScreen(
                                 erro = null
                                 resultado = null
                                 val principal = valorInvestido.valorMonetarioParaDouble()
-                                val aporteMensalValor =
-                                    if (aporteMensal.isBlank()) 0.0 else aporteMensal.paraDoubleOuNulo()
+                                val aporteMensalValor = aporteMensal.valorMonetarioParaDouble()
                                 val prazoQtd = prazoQuantidade.toIntOrNull()
                                 val taxaAnual = when (tipoRentabilidade) {
                                     TipoRentabilidade.PRE_FIXADO -> taxaPrefixada.paraDoubleOuNulo()?.div(100.0)
@@ -299,7 +298,7 @@ internal fun CdbCalculatorScreen(
 
                                 if (principal <= 0.0) {
                                     erro = "Informe um valor investido válido."
-                                } else if (aporteMensalValor == null || aporteMensalValor < 0.0) {
+                                } else if (aporteMensalValor < 0.0) {
                                     erro = "Informe um aporte mensal válido."
                                 } else if (prazoQtd == null || prazoQtd <= 0) {
                                     erro = "Informe um prazo válido."
