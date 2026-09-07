@@ -7,13 +7,20 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Busca a taxa CDI anualizada (% a.a.) publicada pelo Banco Central do Brasil,
- * série SGS 4389 ("CDI acumulada no mês, anualizada base 252").
+ * Busca taxas anualizadas (% a.a.) publicadas pelo Banco Central do Brasil
+ * através da API de Séries Temporais (SGS).
  */
 class CdiRateService {
 
-    suspend fun buscarTaxaCdiAnual(): Result<Double> = withContext(Dispatchers.IO) {
-        val connection = (URL(ENDPOINT).openConnection() as HttpURLConnection).apply {
+    /** Série SGS 4389: "CDI acumulada no mês, anualizada base 252". */
+    suspend fun buscarTaxaCdiAnual(): Result<Double> = buscarTaxaAnualizada(SERIE_CDI)
+
+    /** Série SGS 432: "Meta da taxa Selic definida pelo Copom". */
+    suspend fun buscarTaxaSelicAnual(): Result<Double> = buscarTaxaAnualizada(SERIE_SELIC)
+
+    private suspend fun buscarTaxaAnualizada(codigoSerie: Int): Result<Double> = withContext(Dispatchers.IO) {
+        val endpoint = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.$codigoSerie/dados/ultimos/1?formato=json"
+        val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = TIMEOUT_MS
             readTimeout = TIMEOUT_MS
@@ -37,8 +44,8 @@ class CdiRateService {
     }
 
     private companion object {
-        const val ENDPOINT =
-            "https://api.bcb.gov.br/dados/serie/bcdata.sgs.4389/dados/ultimos/1?formato=json"
+        const val SERIE_CDI = 4389
+        const val SERIE_SELIC = 432
         const val TIMEOUT_MS = 10_000
     }
 }

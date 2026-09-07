@@ -183,7 +183,9 @@ internal fun SecaoRentabilidade(
     taxaPrefixada: String,
     onTaxaPrefixadaChange: (String) -> Unit,
     carregandoCdi: Boolean,
-    onAtualizarCdi: () -> Unit
+    onAtualizarCdi: () -> Unit,
+    carregandoSelic: Boolean,
+    onAtualizarSelic: () -> Unit
 ) {
     CartaoSecao(titulo = "Tipo de Renda Fixa", icone = Icons.AutoMirrored.Filled.TrendingUp) {
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -250,19 +252,41 @@ internal fun SecaoRentabilidade(
                 }
             }
         } else {
-            OutlinedTextField(
-                value = taxaPrefixada,
-                onValueChange = onTaxaPrefixadaChange,
-                label = { Text("Taxa ao ano (%)") },
-                leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null, tint = LocalCorIcones.current) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = LocalCorNumeros.current,
-                    unfocusedTextColor = LocalCorNumeros.current
-                ),
-                modifier = Modifier.fillMaxWidth().trazerParaVisivelAoFocar()
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = taxaPrefixada,
+                    onValueChange = { onTaxaPrefixadaChange(it.filter { caractere -> caractere.isDigit() }) },
+                    label = { Text("Taxa Selic ao ano (%)") },
+                    leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null, tint = LocalCorIcones.current) },
+                    visualTransformation = MascaraPercentualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = LocalCorNumeros.current,
+                        unfocusedTextColor = LocalCorNumeros.current
+                    ),
+                    modifier = Modifier.weight(1f).trazerParaVisivelAoFocar()
+                )
+                if (carregandoSelic) {
+                    Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    }
+                } else {
+                    FilledIconButton(
+                        onClick = onAtualizarSelic,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Atualizar taxa Selic")
+                    }
+                }
+            }
         }
     }
 }

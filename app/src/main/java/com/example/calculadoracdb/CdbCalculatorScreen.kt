@@ -90,7 +90,7 @@ internal fun CdbCalculatorScreen(
     var tipoRentabilidade by rememberSaveable { mutableStateOf(TipoRentabilidade.POS_FIXADO) }
     var percentualCdi by rememberSaveable { mutableStateOf("10200") }
     var taxaCdi by rememberSaveable { mutableStateOf("1390") }
-    var taxaPrefixada by rememberSaveable { mutableStateOf("12") }
+    var taxaPrefixada by rememberSaveable { mutableStateOf("1200") }
     var prazoQuantidade by rememberSaveable { mutableStateOf("12") }
     var unidadePrazo by rememberSaveable { mutableStateOf(UnidadePrazo.MESES) }
     var unidadeExpandida by remember { mutableStateOf(false) }
@@ -98,6 +98,7 @@ internal fun CdbCalculatorScreen(
     var resultado by remember { mutableStateOf<ResultadoCdb?>(null) }
     var erro by remember { mutableStateOf<String?>(null) }
     var carregandoCdi by remember { mutableStateOf(false) }
+    var carregandoSelic by remember { mutableStateOf(false) }
     var mostrarHistorico by remember { mutableStateOf(false) }
     var mostrarConfiguracoes by remember { mutableStateOf(false) }
 
@@ -121,8 +122,18 @@ internal fun CdbCalculatorScreen(
         carregandoCdi = false
     }
 
+    suspend fun atualizarTaxaSelic() {
+        erro = null
+        carregandoSelic = true
+        cdiRateService.buscarTaxaSelicAnual()
+            .onSuccess { taxaPrefixada = (it * 100).roundToLong().toString() }
+            .onFailure { erro = "Não foi possível obter a taxa Selic: ${it.message}" }
+        carregandoSelic = false
+    }
+
     LaunchedEffect(Unit) {
         atualizarTaxaCdi()
+        atualizarTaxaSelic()
     }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -269,7 +280,9 @@ internal fun CdbCalculatorScreen(
                             taxaPrefixada = taxaPrefixada,
                             onTaxaPrefixadaChange = { taxaPrefixada = it },
                             carregandoCdi = carregandoCdi,
-                            onAtualizarCdi = { coroutineScope.launch { atualizarTaxaCdi() } }
+                            onAtualizarCdi = { coroutineScope.launch { atualizarTaxaCdi() } },
+                            carregandoSelic = carregandoSelic,
+                            onAtualizarSelic = { coroutineScope.launch { atualizarTaxaSelic() } }
                         )
 
                         SecaoPrazo(
@@ -289,7 +302,7 @@ internal fun CdbCalculatorScreen(
                                 val aporteMensalValor = aporteMensal.valorMonetarioParaDouble()
                                 val prazoQtd = prazoQuantidade.toIntOrNull()
                                 val taxaAnual = when (tipoRentabilidade) {
-                                    TipoRentabilidade.PRE_FIXADO -> taxaPrefixada.paraDoubleOuNulo()?.div(100.0)
+                                    TipoRentabilidade.PRE_FIXADO -> taxaPrefixada.percentualParaDouble() / 100.0
                                     TipoRentabilidade.POS_FIXADO -> {
                                         val cdi = percentualCdi.percentualParaDouble()
                                         val taxa = taxaCdi.percentualParaDouble()
@@ -303,7 +316,7 @@ internal fun CdbCalculatorScreen(
                                     erro = "Informe um aporte mensal válido."
                                 } else if (prazoQtd == null || prazoQtd <= 0) {
                                     erro = "Informe um prazo válido."
-                                } else if (taxaAnual == null || taxaAnual < 0.0) {
+                                } else if (taxaAnual < 0.0) {
                                     erro = "Informe uma taxa válida."
                                 } else {
                                     val prazoDias = unidadePrazo.paraDias(prazoQtd)
@@ -323,7 +336,7 @@ internal fun CdbCalculatorScreen(
 
                                     val descricaoTaxa = when (tipoRentabilidade) {
                                         TipoRentabilidade.POS_FIXADO -> "${formatarPercentual(percentualCdi)} do CDI"
-                                        TipoRentabilidade.PRE_FIXADO -> "$taxaPrefixada% a.a."
+                                        TipoRentabilidade.PRE_FIXADO -> "${formatarPercentual(taxaPrefixada)} a.a."
                                     }
                                     val descricaoEntrada = buildString {
                                         append(formatoMoeda.format(principal))
