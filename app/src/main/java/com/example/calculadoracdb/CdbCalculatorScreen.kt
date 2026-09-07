@@ -335,7 +335,8 @@ internal fun CdbCalculatorScreen(
                                     resultado = novoResultado
 
                                     val descricaoTaxa = when (tipoRentabilidade) {
-                                        TipoRentabilidade.POS_FIXADO -> "${formatarPercentual(percentualCdi)} do CDI"
+                                        TipoRentabilidade.POS_FIXADO ->
+                                            "${formatarPercentual(percentualCdi)} do CDI (${formatarPercentual(taxaCdi)} a.a.)"
                                         TipoRentabilidade.PRE_FIXADO -> "${formatarPercentual(taxaPrefixada)} a.a."
                                     }
                                     val descricaoEntrada = buildString {
@@ -345,7 +346,7 @@ internal fun CdbCalculatorScreen(
                                         }
                                         append(" · ").append(prazoQtd).append(" ")
                                         append(unidadePrazo.rotulo().lowercase())
-                                        append(" · ").append(descricaoTaxa)
+                                        append("\n").append(descricaoTaxa)
                                     }
                                     val item = ItemHistorico(
                                         id = System.currentTimeMillis(),
