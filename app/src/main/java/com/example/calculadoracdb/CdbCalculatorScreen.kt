@@ -84,7 +84,7 @@ internal fun CdbCalculatorScreen(
     camposHistorico: CamposHistorico,
     onCamposHistoricoChange: (CamposHistorico) -> Unit
 ) {
-    var valorInvestido by rememberSaveable { mutableStateOf("1000") }
+    var valorInvestido by rememberSaveable { mutableStateOf(formatarValorMonetario("100000")) }
     var aporteMensal by rememberSaveable { mutableStateOf("0") }
     var tipoRentabilidade by rememberSaveable { mutableStateOf(TipoRentabilidade.POS_FIXADO) }
     var percentualCdi by rememberSaveable { mutableStateOf("102") }
@@ -284,7 +284,7 @@ internal fun CdbCalculatorScreen(
                             onClick = {
                                 erro = null
                                 resultado = null
-                                val principal = valorInvestido.paraDoubleOuNulo()
+                                val principal = valorInvestido.valorMonetarioParaDouble()
                                 val aporteMensalValor =
                                     if (aporteMensal.isBlank()) 0.0 else aporteMensal.paraDoubleOuNulo()
                                 val prazoQtd = prazoQuantidade.toIntOrNull()
@@ -297,7 +297,7 @@ internal fun CdbCalculatorScreen(
                                     }
                                 }
 
-                                if (principal == null || principal <= 0.0) {
+                                if (principal <= 0.0) {
                                     erro = "Informe um valor investido válido."
                                 } else if (aporteMensalValor == null || aporteMensalValor < 0.0) {
                                     erro = "Informe um aporte mensal válido."

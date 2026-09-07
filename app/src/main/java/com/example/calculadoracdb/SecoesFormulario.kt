@@ -141,11 +141,11 @@ internal fun SecaoValorInvestido(
     CartaoSecao(titulo = "Valor investido", icone = Icons.Filled.Savings) {
         OutlinedTextField(
             value = valorInvestido,
-            onValueChange = onValorChange,
+            onValueChange = { onValorChange(formatarValorMonetario(it)) },
             label = { Text("Valor investido (R$)") },
-            leadingIcon = { Icon(Icons.Filled.AttachMoney, contentDescription = null, tint = LocalCorIcones.current) },
+            //leadingIcon = { Icon(Icons.Filled.AttachMoney, contentDescription = null, tint = LocalCorIcones.current) },
             textStyle = MaterialTheme.typography.titleLarge,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = LocalCorNumeros.current,
@@ -155,9 +155,10 @@ internal fun SecaoValorInvestido(
         )
         OutlinedTextField(
             value = aporteMensal,
-            onValueChange = onAporteMensalChange,
+            //onValueChange = onAporteMensalChange,
+            onValueChange = { onValorChange(formatarValorMonetario(it)) },
             label = { Text("Aporte mensal (R$)") },
-            leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null, tint = LocalCorIcones.current) },
+            //leadingIcon = { Icon(Icons.Filled.Savings, contentDescription = null, tint = LocalCorIcones.current) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
