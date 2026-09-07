@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import com.example.calculadoracdb.ui.theme.CalculadoraCDBTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import kotlin.math.roundToLong
 
 internal enum class TipoRentabilidade { POS_FIXADO, PRE_FIXADO }
 
@@ -88,7 +89,7 @@ internal fun CdbCalculatorScreen(
     var aporteMensal by rememberSaveable { mutableStateOf("0") }
     var tipoRentabilidade by rememberSaveable { mutableStateOf(TipoRentabilidade.POS_FIXADO) }
     var percentualCdi by rememberSaveable { mutableStateOf("10200") }
-    var taxaCdi by rememberSaveable { mutableStateOf("13,90") }
+    var taxaCdi by rememberSaveable { mutableStateOf("1390") }
     var taxaPrefixada by rememberSaveable { mutableStateOf("12") }
     var prazoQuantidade by rememberSaveable { mutableStateOf("12") }
     var unidadePrazo by rememberSaveable { mutableStateOf(UnidadePrazo.MESES) }
@@ -115,7 +116,7 @@ internal fun CdbCalculatorScreen(
         erro = null
         carregandoCdi = true
         cdiRateService.buscarTaxaCdiAnual()
-            .onSuccess { taxaCdi = "%.2f".format(it).replace(".", ",") }
+            .onSuccess { taxaCdi = (it * 100).roundToLong().toString() }
             .onFailure { erro = "Não foi possível obter a taxa CDI: ${it.message}" }
         carregandoCdi = false
     }
@@ -291,8 +292,8 @@ internal fun CdbCalculatorScreen(
                                     TipoRentabilidade.PRE_FIXADO -> taxaPrefixada.paraDoubleOuNulo()?.div(100.0)
                                     TipoRentabilidade.POS_FIXADO -> {
                                         val cdi = percentualCdi.percentualParaDouble()
-                                        val taxa = taxaCdi.paraDoubleOuNulo()
-                                        if (taxa != null) taxaAnualPosFixado(cdi, taxa) else null
+                                        val taxa = taxaCdi.percentualParaDouble()
+                                        taxaAnualPosFixado(cdi, taxa)
                                     }
                                 }
 

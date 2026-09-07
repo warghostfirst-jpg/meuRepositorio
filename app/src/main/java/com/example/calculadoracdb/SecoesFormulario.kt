@@ -221,10 +221,11 @@ internal fun SecaoRentabilidade(
             ) {
                 OutlinedTextField(
                     value = taxaCdi,
-                    onValueChange = onTaxaCdiChange,
+                    onValueChange = { onTaxaCdiChange(it.filter { caractere -> caractere.isDigit() }) },
                     label = { Text("Taxa CDI ao ano (%)") },
                     leadingIcon = { Icon(Icons.Filled.Payments, contentDescription = null, tint = LocalCorIcones.current) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    visualTransformation = MascaraPercentualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = LocalCorNumeros.current,
