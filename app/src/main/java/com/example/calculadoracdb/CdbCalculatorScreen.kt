@@ -87,7 +87,7 @@ internal fun CdbCalculatorScreen(
     var valorInvestido by rememberSaveable { mutableStateOf("100000") }
     var aporteMensal by rememberSaveable { mutableStateOf("0") }
     var tipoRentabilidade by rememberSaveable { mutableStateOf(TipoRentabilidade.POS_FIXADO) }
-    var percentualCdi by rememberSaveable { mutableStateOf("102") }
+    var percentualCdi by rememberSaveable { mutableStateOf("10200") }
     var taxaCdi by rememberSaveable { mutableStateOf("13,90") }
     var taxaPrefixada by rememberSaveable { mutableStateOf("12") }
     var prazoQuantidade by rememberSaveable { mutableStateOf("12") }
@@ -290,9 +290,9 @@ internal fun CdbCalculatorScreen(
                                 val taxaAnual = when (tipoRentabilidade) {
                                     TipoRentabilidade.PRE_FIXADO -> taxaPrefixada.paraDoubleOuNulo()?.div(100.0)
                                     TipoRentabilidade.POS_FIXADO -> {
-                                        val cdi = percentualCdi.paraDoubleOuNulo()
+                                        val cdi = percentualCdi.percentualParaDouble()
                                         val taxa = taxaCdi.paraDoubleOuNulo()
-                                        if (cdi != null && taxa != null) taxaAnualPosFixado(cdi, taxa) else null
+                                        if (taxa != null) taxaAnualPosFixado(cdi, taxa) else null
                                     }
                                 }
 
@@ -321,7 +321,7 @@ internal fun CdbCalculatorScreen(
                                     resultado = novoResultado
 
                                     val descricaoTaxa = when (tipoRentabilidade) {
-                                        TipoRentabilidade.POS_FIXADO -> "$percentualCdi% do CDI"
+                                        TipoRentabilidade.POS_FIXADO -> "${formatarPercentual(percentualCdi)} do CDI"
                                         TipoRentabilidade.PRE_FIXADO -> "$taxaPrefixada% a.a."
                                     }
                                     val descricaoEntrada = buildString {

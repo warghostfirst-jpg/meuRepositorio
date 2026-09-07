@@ -202,10 +202,11 @@ internal fun SecaoRentabilidade(
         if (tipoRentabilidade == TipoRentabilidade.POS_FIXADO) {
             OutlinedTextField(
                 value = percentualCdi,
-                onValueChange = onPercentualCdiChange,
+                onValueChange = { onPercentualCdiChange(it.filter { caractere -> caractere.isDigit() }) },
                 label = { Text("% do CDI") },
                 leadingIcon = { Icon(Icons.Filled.Percent, contentDescription = null, tint = LocalCorIcones.current) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                visualTransformation = MascaraPercentualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = LocalCorNumeros.current,

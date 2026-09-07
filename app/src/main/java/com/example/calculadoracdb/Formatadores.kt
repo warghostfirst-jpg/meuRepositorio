@@ -58,3 +58,30 @@ internal class MascaraValorMonetarioTransformation : VisualTransformation {
         return TransformedText(AnnotatedString(formatado), offsetMapping)
     }
 }
+
+/** Formata uma sequência de dígitos (interpretados como centésimos) em "10,33%". */
+internal fun formatarPercentual(digitos: String): String {
+    val valorCentesimos = digitos.filter { it.isDigit() }.toLongOrNull() ?: 0L
+    val inteiro = valorCentesimos / 100
+    val decimal = valorCentesimos % 100
+    return "${agruparMilhares(inteiro)},${decimal.toString().padStart(2, '0')}%"
+}
+
+/** Converte os dígitos brutos (interpretados como centésimos) para Double. */
+internal fun String.percentualParaDouble(): Double {
+    val valorCentesimos = filter { it.isDigit() }.toLongOrNull() ?: 0L
+    return valorCentesimos / 100.0
+}
+
+/** Mesma ideia de [MascaraValorMonetarioTransformation], mas exibindo "10,33%". */
+internal class MascaraPercentualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digitos = text.text.filter { it.isDigit() }
+        val formatado = formatarPercentual(digitos)
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int = formatado.length
+            override fun transformedToOriginal(offset: Int): Int = digitos.length
+        }
+        return TransformedText(AnnotatedString(formatado), offsetMapping)
+    }
+}
