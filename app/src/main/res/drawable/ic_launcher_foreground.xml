@@ -32,11 +32,11 @@
     <!-- barras de crescimento -->
     <path
         android:pathData="M38,60.15L46,60.15L46,70.5L38,70.5Z"
-        android:fillColor="#1B5E20" />
+        android:fillColor="#0C2D52" />
     <path
         android:pathData="M50,51.53L58,51.53L58,70.5L50,70.5Z"
-        android:fillColor="#1B5E20" />
+        android:fillColor="#0C2D52" />
     <path
         android:pathData="M62,41.18L70,41.18L70,70.5L62,70.5Z"
-        android:fillColor="#1B5E20" />
+        android:fillColor="#0C2D52" />
 </vector>
