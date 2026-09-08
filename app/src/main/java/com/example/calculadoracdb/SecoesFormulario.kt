@@ -192,12 +192,20 @@ internal fun SecaoRentabilidade(
             SegmentedButton(
                 selected = tipoRentabilidade == TipoRentabilidade.POS_FIXADO,
                 onClick = { onTipoChange(TipoRentabilidade.POS_FIXADO) },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             ) { Text("CDB/RDB") }
             SegmentedButton(
                 selected = tipoRentabilidade == TipoRentabilidade.PRE_FIXADO,
                 onClick = { onTipoChange(TipoRentabilidade.PRE_FIXADO) },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             ) { Text("Tesouro Selic") }
         }
 
@@ -243,8 +251,8 @@ internal fun SecaoRentabilidade(
                     FilledIconButton(
                         onClick = onAtualizarCdi,
                         colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Atualizar taxa CDI")
@@ -279,8 +287,8 @@ internal fun SecaoRentabilidade(
                     FilledIconButton(
                         onClick = onAtualizarSelic,
                         colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     ) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Atualizar taxa Selic")
