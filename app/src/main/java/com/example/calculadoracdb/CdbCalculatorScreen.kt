@@ -334,12 +334,17 @@ internal fun CdbCalculatorScreen(
                                     )
                                     resultado = novoResultado
 
+                                    val descricaoTipo = when (tipoRentabilidade) {
+                                        TipoRentabilidade.POS_FIXADO -> "CDB/RDB"
+                                        TipoRentabilidade.PRE_FIXADO -> "Tesouro Selic"
+                                    }
                                     val descricaoTaxa = when (tipoRentabilidade) {
                                         TipoRentabilidade.POS_FIXADO ->
                                             "${formatarPercentual(percentualCdi)} do CDI (${formatarPercentual(taxaCdi)} a.a.)"
                                         TipoRentabilidade.PRE_FIXADO -> "${formatarPercentual(taxaPrefixada)} a.a."
                                     }
                                     val descricaoEntrada = buildString {
+                                        append(descricaoTipo).append("\n")
                                         append(formatoMoeda.format(principal))
                                         if (aporteMensalValor > 0.0) {
                                             append(" + ").append(formatoMoeda.format(aporteMensalValor)).append("/mês")

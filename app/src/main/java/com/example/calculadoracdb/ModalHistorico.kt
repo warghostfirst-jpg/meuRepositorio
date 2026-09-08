@@ -150,10 +150,18 @@ private fun CartaoItemHistorico(
                     style = MaterialTheme.typography.labelMedium,
                     color = LocalCorNumeros.current
                 )
+                val linhasDescricao = item.descricaoEntrada.split("\n")
                 Text(
-                    item.descricaoEntrada,
-                    style = MaterialTheme.typography.bodyMedium
+                    linhasDescricao.first(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
                 )
+                if (linhasDescricao.size > 1) {
+                    Text(
+                        linhasDescricao.drop(1).joinToString("\n"),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 camposDoResultado(item.resultado, camposHistorico).forEach { (rotulo, valor) ->
                     Text(
                         "$rotulo: $valor",
