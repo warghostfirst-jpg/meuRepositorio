@@ -10,7 +10,6 @@ internal const val PREFERENCIAS_APP = "calculadora_cdb_preferencias"
 
 internal const val CHAVE_TEMA_ESCURO = "tema_escuro"
 internal const val CHAVE_COR_PRIMARIA = "cor_primaria"
-internal const val CHAVE_COR_SECUNDARIA = "cor_secundaria"
 internal const val CHAVE_COR_FUNDO = "cor_fundo"
 internal const val CHAVE_COR_SUPERFICIE = "cor_superficie"
 internal const val CHAVE_COR_LETRAS = "cor_texto"
@@ -36,7 +35,6 @@ internal const val CHAVE_ANUNCIOS_REMOVIDOS = "anuncios_removidos"
 
 internal data class CoresPersonalizadas(
     val primaria: Color? = null,
-    val secundaria: Color? = null,
     val fundo: Color? = null,
     val superficie: Color? = null,
     val letras: Color? = null,

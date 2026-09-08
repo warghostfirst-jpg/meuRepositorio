@@ -48,7 +48,6 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(
                     CoresPersonalizadas(
                         primaria = preferencias.corSalva(CHAVE_COR_PRIMARIA),
-                        secundaria = preferencias.corSalva(CHAVE_COR_SECUNDARIA),
                         fundo = preferencias.corSalva(CHAVE_COR_FUNDO),
                         superficie = preferencias.corSalva(CHAVE_COR_SUPERFICIE),
                         letras = preferencias.corSalva(CHAVE_COR_LETRAS),
@@ -121,7 +120,6 @@ class MainActivity : ComponentActivity() {
                         coresPersonalizadas = novasCores
                         preferencias.edit()
                             .salvarCor(CHAVE_COR_PRIMARIA, novasCores.primaria)
-                            .salvarCor(CHAVE_COR_SECUNDARIA, novasCores.secundaria)
                             .salvarCor(CHAVE_COR_FUNDO, novasCores.fundo)
                             .salvarCor(CHAVE_COR_SUPERFICIE, novasCores.superficie)
                             .salvarCor(CHAVE_COR_LETRAS, novasCores.letras)

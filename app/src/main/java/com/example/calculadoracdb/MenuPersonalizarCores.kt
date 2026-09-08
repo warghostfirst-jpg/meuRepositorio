@@ -94,15 +94,9 @@ internal fun MenuPersonalizarCores(
         }
 
         SeletorDeCor(
-            titulo = "Cor primária",
+            titulo = "Cor base",
             corSelecionada = coresPersonalizadas.primaria,
             aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(primaria = it)) }
-        )
-
-        SeletorDeCor(
-            titulo = "Cor secundária",
-            corSelecionada = coresPersonalizadas.secundaria,
-            aoSelecionar = { onCoresPersonalizadasChange(coresPersonalizadas.copy(secundaria = it)) }
         )
 
         SeletorDeCor(
