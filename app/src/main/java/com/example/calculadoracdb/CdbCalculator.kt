@@ -30,6 +30,7 @@ fun percentualIof(prazoDias: Int): Double = when {
 }
 
 data class ResultadoCdb(
+    /** Soma apenas dos aportes mensais (não inclui o valor investido inicial). */
     val totalAportado: Double,
     val valorBruto: Double,
     val rendimentoBruto: Double,
@@ -95,9 +96,10 @@ private fun gerarEvolucao(
             val diasRestantes = dia - mes * DIAS_UTEIS_POR_MES
             valorBrutoAportes += aporteMensal * (1 + taxaDiaria).pow(diasRestantes.toDouble())
         }
-        val totalAportadoNoDia = principal + aporteMensal * numeroDeAportesAteODia
+        val totalAportesNoDia = aporteMensal * numeroDeAportesAteODia
+        val totalInvestidoNoDia = principal + totalAportesNoDia
         val valorBrutoNoDia = valorBrutoPrincipal + valorBrutoAportes
-        val rendimentoBrutoNoDia = valorBrutoNoDia - totalAportadoNoDia
+        val rendimentoBrutoNoDia = valorBrutoNoDia - totalInvestidoNoDia
 
         val percentualIofNoDia = percentualIofPersonalizado ?: percentualIof(dia)
         val iofValorNoDia = (rendimentoBrutoNoDia * percentualIofNoDia).coerceAtLeast(0.0)
@@ -107,14 +109,14 @@ private fun gerarEvolucao(
         val irValorNoDia = (rendimentoAposIofNoDia * aliquotaIrNoDia).coerceAtLeast(0.0)
 
         val rendimentoLiquidoNoDia = rendimentoAposIofNoDia - irValorNoDia
-        val valorLiquidoNoDia = totalAportadoNoDia + rendimentoLiquidoNoDia
+        val valorLiquidoNoDia = totalInvestidoNoDia + rendimentoLiquidoNoDia
         val rentabilidadeLiquidaNoDia =
-            if (totalAportadoNoDia != 0.0) rendimentoLiquidoNoDia / totalAportadoNoDia * 100.0 else 0.0
+            if (totalInvestidoNoDia != 0.0) rendimentoLiquidoNoDia / totalInvestidoNoDia * 100.0 else 0.0
 
         PontoEvolucao(
             diaUtil = dia,
             data = adicionarDiasUteis(dataInicio, dia),
-            totalAportado = totalAportadoNoDia,
+            totalAportado = totalAportesNoDia,
             valorBruto = valorBrutoNoDia,
             rendimentoBruto = rendimentoBrutoNoDia,
             iofValor = iofValorNoDia,
@@ -161,8 +163,9 @@ fun calcularCdb(
     }
 
     val valorBruto = valorBrutoPrincipal + valorBrutoAportes
-    val totalAportado = principal + aporteMensal * numeroDeAportes
-    val rendimentoBruto = valorBruto - totalAportado
+    val totalAportado = aporteMensal * numeroDeAportes
+    val totalInvestido = principal + totalAportado
+    val rendimentoBruto = valorBruto - totalInvestido
 
     val percentualIofAplicado = percentualIofPersonalizado ?: percentualIof(prazoDias)
     val iofValor = (rendimentoBruto * percentualIofAplicado).coerceAtLeast(0.0)
@@ -172,9 +175,9 @@ fun calcularCdb(
     val irValor = (rendimentoAposIof * aliquota).coerceAtLeast(0.0)
 
     val rendimentoLiquido = rendimentoAposIof - irValor
-    val valorLiquido = totalAportado + rendimentoLiquido
+    val valorLiquido = totalInvestido + rendimentoLiquido
     val rentabilidadeLiquidaPercentual =
-        if (totalAportado != 0.0) rendimentoLiquido / totalAportado * 100.0 else 0.0
+        if (totalInvestido != 0.0) rendimentoLiquido / totalInvestido * 100.0 else 0.0
 
     return ResultadoCdb(
         totalAportado = totalAportado,
